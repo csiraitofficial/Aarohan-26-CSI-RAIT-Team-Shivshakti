@@ -1,202 +1,417 @@
 import React, { useState, useEffect } from 'react';
 import { useDashboardContext } from '../context/DashboardContext';
+import {
+    Users,
+    MapPin,
+    ShieldAlert,
+    TrendingUp,
+    Navigation,
+    Bell,
+    HelpCircle,
+    ChevronRight,
+    Search,
+    Clock,
+    Activity,
+    Sparkles,
+    History,
+    LocateFixed,
+    Layers
+} from 'lucide-react';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
+
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
+
+const mapContainerStyle = {
+    width: '100%',
+    height: '600px',
+    borderRadius: '1.5rem'
+};
+
+const defaultCenter = {
+    lat: 19.0435, // D.Y. Patil Stadium area
+    lng: 73.0163
+};
 
 export default function OverviewPage() {
-    const { zones, alerts, user, getUserLocationZone, getZoneById, getRiskColorInfo } = useDashboardContext();
-    const [mapSrc, setMapSrc] = useState("https://maps.google.com/maps?q=stadium&t=&z=16&ie=UTF8&iwloc=&output=embed");
+    const { zones, alerts, user, getUserLocationZone, getZoneById } = useDashboardContext();
+    const locationZone = getUserLocationZone();
 
+    // Google Maps State
+    const { isLoaded } = useJsApiLoader({
+        id: 'google-map-script',
+        googleMapsApiKey: GOOGLE_MAPS_API_KEY
+    });
+
+    const [map, setMap] = useState(null);
+    const [mapType, setMapType] = useState('satellite');
+    const [currentPos, setCurrentPos] = useState(defaultCenter);
+    const [selectedZone, setSelectedZone] = useState(null);
+
+    // Geolocation Implementation
     useEffect(() => {
-        if ("geolocation" in navigator) {
+        if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    setMapSrc(`https://maps.google.com/maps?q=${lat},${lng}&t=&z=16&ie=UTF8&iwloc=&output=embed`);
+                    const pos = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    setCurrentPos(pos);
                 },
-                (error) => console.warn("Geolocation permission denied/failed", error)
+                () => {
+                    console.error("Error: The Geolocation service failed.");
+                }
             );
         }
     }, []);
 
-    const locationZone = getUserLocationZone();
-    const activeAlerts = alerts.filter(a => a.type === 'Critical' || a.type === 'Warning');
-    const highRiskZones = zones.filter(z => z.riskLevel === 'High' || z.riskLevel === 'Critical');
-    
-    const avgDensity = Math.round(zones.reduce((acc, z) => acc + z.density, 0) / zones.length);
+    // Navigation State
+    const [fromZone, setFromZone] = useState(locationZone?.id || '');
+    const [toZone, setToZone] = useState('');
+    const [isRouting, setIsRouting] = useState(false);
+
+    // Turn-by-turn directions data
+    const directions = [
+        { id: 1, text: "Head north from your current location.", icon: <Navigation size={14} className="rotate-45" /> },
+        { id: 2, text: "Take a right before the Food Court.", icon: <Navigation size={14} className="rotate-90" /> },
+        { id: 3, text: "Walk past North Stand Level 1.", icon: <Navigation size={14} /> },
+        { id: 4, text: "Arrive at Merchandise Stall A.", icon: <MapPin size={14} /> },
+    ];
+
+    // Prediction data for the graph
+    const predictionData = [
+        { time: '12:00', current: 45, predicted: 48 },
+        { time: '13:00', current: 52, predicted: 55 },
+        { time: '14:00', current: 68, predicted: 62 },
+        { time: '15:00', current: 85, predicted: 80 },
+        { time: '16:00', current: 92, predicted: 88 },
+        { time: '17:00', current: 78, predicted: 75 },
+    ];
+
+    const getRiskStyles = (level) => {
+        switch (level) {
+            case 'Low': return 'text-emerald-700 bg-emerald-50 border-emerald-100';
+            case 'Moderate': return 'text-amber-700 bg-amber-50 border-amber-100';
+            case 'High': return 'text-orange-700 bg-orange-50 border-orange-100';
+            case 'Critical': return 'text-red-700 bg-red-50 border-red-100';
+            default: return 'text-slate-700 bg-slate-50 border-slate-100';
+        }
+    };
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto">
-            {/* Top KPI Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col justify-between">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Active Zones</span>
-                        <svg className="w-5 h-5 text-[#00AEEF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+        <div className="space-y-6">
+            {/* Live Venue Status Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+                {zones.map(zone => (
+                    <div key={zone.id} className="card-base group hover:border-secondary transition-all">
+                        <div className="flex justify-between items-start mb-4">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none truncate max-w-[80%]">{zone.name}</p>
+                            <MapPin size={14} className="text-slate-300 group-hover:text-secondary transition-colors" />
+                        </div>
+                        <p className="text-2xl font-bold text-slate-800 tracking-tight">{zone.density}% Full</p>
+                        <div className={`mt-2 flex items-center gap-1.5 px-2 py-0.5 rounded border text-[9px] font-bold uppercase tracking-wider w-fit ${getRiskStyles(zone.riskLevel)}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${zone.riskLevel === 'Critical' ? 'animate-pulse' : ''} ${zone.riskLevel === 'Low' ? 'bg-emerald-500' :
+                                zone.riskLevel === 'Moderate' ? 'bg-amber-500' :
+                                    zone.riskLevel === 'High' ? 'bg-orange-500' : 'bg-red-500'
+                                }`}></span>
+                            {zone.riskLevel} Risk
+                        </div>
                     </div>
-                    <div className="text-3xl font-bold text-[#002868]">{zones.length} monitored</div>
+                ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Live Google Maps Integration (Matching Image 1 & 2 Requirements) */}
+                <div className="lg:col-span-2 space-y-6">
+                    <div className="card-base !p-0 overflow-hidden shadow-2xl border-slate-200/60 transition-all bg-white">
+                        {/* Header: Live Navigation HUD */}
+                        <div className="bg-[#002868] p-5 flex items-center justify-between text-white relative z-10 shadow-lg">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-white/10 shadow-inner">
+                                    <LocateFixed size={24} className="text-secondary-300" />
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-base tracking-tighter uppercase italic leading-none">Live Navigation HUD</h3>
+                                    <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] mt-1.5">Centered on Real-time GPS Telemetry</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => setMapType(mapType === 'satellite' ? 'roadmap' : 'satellite')}
+                                    className="flex items-center gap-2.5 text-[9px] font-black text-white px-5 py-2.5 bg-white/10 hover:bg-secondary border border-white/10 rounded-xl transition-all uppercase tracking-widest shadow-sm"
+                                >
+                                    <Layers size={14} className="opacity-80" />
+                                    {mapType === 'satellite' ? 'Standard Map' : 'Satellite View'}
+                                </button>
+                                <button className="text-[9px] font-black text-white/70 hover:text-white px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all uppercase tracking-widest">Recalculate</button>
+                            </div>
+                        </div>
+
+                        {/* Google Map Container */}
+                        <div className="relative w-full h-[600px] bg-slate-100">
+                            {isLoaded ? (
+                                <GoogleMap
+                                    mapContainerStyle={mapContainerStyle}
+                                    center={currentPos}
+                                    zoom={17}
+                                    onLoad={map => setMap(map)}
+                                    options={{
+                                        mapTypeId: mapType,
+                                        disableDefaultUI: false,
+                                        zoomControl: true,
+                                        streetViewControl: false,
+                                        mapTypeControl: false,
+                                        fullscreenControl: true,
+                                        styles: mapType === 'roadmap' ? [
+                                            { "featureType": "all", "elementType": "labels.text.fill", "stylers": [{ "color": "#616770" }] },
+                                            { "featureType": "water", "stylers": [{ "color": "#e9e9e9" }] }
+                                        ] : []
+                                    }}
+                                >
+                                    {/* User Marker - Refined for a cleaner look */}
+                                    <Marker
+                                        position={currentPos}
+                                        icon={{
+                                            path: window.google?.maps?.SymbolPath?.CIRCLE || 0,
+                                            fillColor: '#3B82F6',
+                                            fillOpacity: 1,
+                                            strokeColor: '#FFFFFF',
+                                            strokeWeight: 3,
+                                            scale: 10
+                                        }}
+                                    />
+
+                                    {/* Zone Markers */}
+                                    {zones.map(zone => (
+                                        <Marker
+                                            key={zone.id}
+                                            position={{ lat: currentPos.lat + (Math.random() - 0.5) * 0.002, lng: currentPos.lng + (Math.random() - 0.5) * 0.002 }}
+                                            onClick={() => setSelectedZone(zone)}
+                                            icon={{
+                                                url: `https://maps.google.com/mapfiles/ms/icons/${zone.riskLevel === 'Critical' ? 'red' : zone.riskLevel === 'High' ? 'orange' : 'green'}-dot.png`,
+                                                scaledSize: new window.google.maps.Size(32, 32)
+                                            }}
+                                        />
+                                    ))}
+
+                                    {selectedZone && (
+                                        <InfoWindow
+                                            position={{ lat: currentPos.lat + 0.0005, lng: currentPos.lng }}
+                                            onCloseClick={() => setSelectedZone(null)}
+                                        >
+                                            <div className="p-3 min-w-[180px] bg-white rounded-lg">
+                                                <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100">
+                                                    <div className={`w-2 h-2 rounded-full ${selectedZone.riskLevel === 'Critical' ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`}></div>
+                                                    <p className="text-[10px] font-black text-slate-800 uppercase tracking-widest">{selectedZone.name}</p>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-[9px] font-bold text-slate-400 uppercase">Congestion</span>
+                                                        <span className="text-xs font-black text-slate-800">{selectedZone.density}%</span>
+                                                    </div>
+                                                    <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                                                        <div
+                                                            className={`h-full transition-all duration-1000 ${selectedZone.riskLevel === 'Critical' ? 'bg-red-500' : 'bg-emerald-500'}`}
+                                                            style={{ width: `${selectedZone.density}%` }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </InfoWindow>
+                                    )}
+                                </GoogleMap>
+                            ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 gap-4">
+                                    <div className="w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Initializing GPS Telemetry...</p>
+                                </div>
+                            )}
+
+                            {/* Live HUD Watermark */}
+                            <div className="absolute bottom-6 right-6 pointer-events-none opacity-40">
+                                <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.4em] italic drop-shadow-md">Secure Venue Protocol v2.0</p>
+                            </div>
+                            {/* Floating Stats HUD - Repositioned and Refined */}
+                            <div className="absolute top-6 left-6 flex flex-col gap-3 pointer-events-none max-w-[280px]">
+                                <div className="bg-white/95 backdrop-blur-xl p-4 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/40 pointer-events-auto transition-transform hover:scale-[1.02] transform-gpu">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Your Location</p>
+                                    </div>
+                                    <p className="text-sm font-black text-slate-800 tracking-tight">{locationZone?.name || 'North Stand (Level 1)'}</p>
+                                </div>
+
+                                <div className="bg-white/95 backdrop-blur-xl p-4 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/40 pointer-events-auto border-l-4 border-l-red-500 transition-transform hover:scale-[1.02] transform-gpu">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <ShieldAlert size={12} className="text-red-500" />
+                                        <p className="text-[9px] font-black text-red-500 uppercase tracking-widest">Avoid Surge</p>
+                                    </div>
+                                    <p className="text-sm font-black text-slate-800 tracking-tight">Gate 4 (Exit Corridor)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Route Navigation Control Panel */}
+                    <div className="card-base">
+                        <div className="mb-6">
+                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Route Navigation Controls</h3>
+                            <p className="text-[10px] text-slate-400 font-medium uppercase mt-0.5 tracking-wider">Configure your safe path</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div>
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">From</label>
+                                <select
+                                    value={fromZone}
+                                    onChange={(e) => setFromZone(e.target.value)}
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all"
+                                >
+                                    {zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">To</label>
+                                <select
+                                    value={toZone}
+                                    onChange={(e) => setToZone(e.target.value)}
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all"
+                                >
+                                    <option value="">Select Destination</option>
+                                    {zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Route Stats Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div className="bg-slate-50 rounded-xl border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow">
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Estimated Time</p>
+                                <p className="text-xl font-black text-slate-800">4 mins</p>
+                            </div>
+                            <div className="bg-slate-50 rounded-xl border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow">
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Distance</p>
+                                <p className="text-xl font-black text-slate-800">250m</p>
+                            </div>
+                            <div className="bg-slate-50 rounded-xl border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow border-l-4 border-l-emerald-500">
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Safety Score</p>
+                                <p className="text-xl font-black text-emerald-600">92% SAFE</p>
+                            </div>
+                        </div>
+
+                        {/* Action Button */}
+                        <button
+                            className="w-full bg-blue-700 text-white rounded-xl px-6 py-4 font-bold text-sm uppercase tracking-widest hover:bg-blue-800 transition-all shadow-lg shadow-blue-700/20 active:scale-[0.98]"
+                            onClick={() => setIsRouting(true)}
+                        >
+                            Find Route Away From Here
+                        </button>
+
+                        {/* Turn-by-turn directions */}
+                        {isRouting && (
+                            <div className="mt-8 pt-8 border-t border-slate-50">
+                                <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                                    <Activity size={14} className="text-secondary" />
+                                    Turn-by-Turn Directions
+                                </h4>
+                                <div className="space-y-4">
+                                    {directions.map((step) => (
+                                        <div key={step.id} className="flex gap-4 items-start group">
+                                            <div className="w-6 h-6 rounded-lg bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:bg-secondary group-hover:text-white transition-colors">
+                                                {step.id}
+                                            </div>
+                                            <div className="flex-1 flex items-center justify-between pb-4 border-b border-slate-50">
+                                                <p className="text-xs font-bold text-slate-600">{step.text}</p>
+                                                <span className="text-slate-300 group-hover:text-secondary transition-colors">{step.icon}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col justify-between">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">High Risk Zones</span>
-                        <svg className="w-5 h-5 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                {/* Safety Alerts Feed */}
+                <div className="card-base !p-0 flex flex-col overflow-hidden max-h-[1000px]">
+                    <div className="px-6 py-4 border-b border-slate-50 bg-slate-50/30 flex justify-between items-center">
+                        <div>
+                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Safety Alerts</h3>
+                            <p className="text-[10px] text-slate-400 font-medium uppercase mt-0.5 tracking-wider">Live environment broadcasts</p>
+                        </div>
+                        <span className="text-[10px] font-bold text-white bg-critical px-2 py-0.5 rounded-full">{alerts.length}</span>
                     </div>
-                    <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold text-[#F97316]">{highRiskZones.length}</span>
-                        <span className="text-sm font-medium text-gray-500">Require caution</span>
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                        {alerts.map(alert => (
+                            <div key={alert.id} className={`p-4 rounded-xl border-l-[3px] bg-slate-50 hover:bg-slate-100 transition-colors group cursor-pointer ${alert.type === 'Critical' ? 'border-l-red-500' :
+                                alert.type === 'Warning' ? 'border-l-amber-500' : 'border-l-blue-500'
+                                }`}>
+                                <div className="flex justify-between items-start mb-1">
+                                    <p className={`text-xs font-bold leading-snug ${alert.type === 'Critical' ? 'text-red-700' :
+                                        alert.type === 'Warning' ? 'text-amber-700' : 'text-blue-700'
+                                        }`}>{alert.title}</p>
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase">Just Now</span>
+                                </div>
+                                <p className="text-[11px] text-slate-600 line-clamp-2">{alert.message}</p>
+                                <div className="mt-3 flex items-center justify-between">
+                                    <button className="text-[9px] font-bold text-slate-400 group-hover:text-secondary uppercase tracking-widest flex items-center gap-1 transition-colors">
+                                        View Details <ChevronRight size={10} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col justify-between">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Avg. Crowd Level</span>
-                        <svg className="w-5 h-5 text-[#00AEEF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold text-[#002868]">{avgDensity}%</span>
-                        <span className="text-sm font-medium text-gray-500">Across all zones</span>
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col justify-between">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Active Alerts</span>
-                        <svg className="w-5 h-5 text-[#EF4444]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold text-[#EF4444]">{activeAlerts.length}</span>
-                        <span className="text-sm font-medium text-gray-500">Unread</span>
+                    {/* Predictive Insights - Integrated into sidebar for better vertical balance */}
+                    <div className="p-6 border-t border-slate-50 bg-slate-50/10">
+                        <div className="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Crowd Forecast</h3>
+                                <p className="text-[10px] text-slate-400 font-medium uppercase mt-0.5 tracking-wider">Predictive congestion</p>
+                            </div>
+                        </div>
+                        <div className="h-32 flex items-end gap-2">
+                            {predictionData.slice(0, 4).map((d, i) => (
+                                <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
+                                    <div className="w-full flex flex-col justify-end gap-0.5 h-20">
+                                        <div className="w-full bg-secondary/20 rounded-t h-1/2"></div>
+                                        <div className="w-full bg-secondary rounded-t" style={{ height: `${d.current / 2}%` }}></div>
+                                    </div>
+                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">{d.time}</span>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* Left Column: Personalized Panel */}
-                <div className="lg:col-span-2 space-y-6">
-                    <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div className="bg-[#002868] px-6 py-4 flex items-center gap-3 text-white">
-                            <span className="p-2 bg-white/10 rounded-lg">
-                                <svg className="w-5 h-5 shrink-0 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                            </span>
-                            <h2 className="text-lg font-bold">Your Surroundings</h2>
+            {/* Help Center Quick Links Footer Row */}
+            <div className="card-base">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-secondary/10 rounded-xl text-secondary">
+                            <HelpCircle size={24} />
                         </div>
-                        <div className="flex flex-col">
-                            {/* Embedded Google Map Section */}
-                            <div className="relative w-full h-[400px] bg-gray-100 border-b border-gray-100">
-                                <iframe 
-                                    src={mapSrc} 
-                                    className="absolute inset-0 w-full h-full border-0 z-0 opacity-80"
-                                    title="Surroundings Map"
-                                    style={{ filter: 'grayscale(0.3) contrast(1.1) brightness(1.05)' }}
-                                    allow="geolocation"
-                                />
-                                
-                                {/* Map User Pin (Center) */}
-                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center pointer-events-none">
-                                    <span className="absolute inline-flex h-12 w-12 rounded-full bg-blue-400 opacity-40 animate-ping"></span>
-                                    <span className="absolute inline-flex h-20 w-20 rounded-full bg-blue-100 opacity-20"></span>
-                                    <span className="relative inline-flex rounded-full h-5 w-5 bg-blue-600 border-2 border-white shadow-xl"></span>
-                                </div>
-                            </div>
-
-                            {/* Info Panel Below Map */}
-                            <div className="w-full bg-white p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                
-                                {/* Left/Top - Current Location & History */}
-                                <div className="space-y-6 flex flex-col justify-between">
-                                    <div>
-                                        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Current Location</h3>
-                                        <p className="text-2xl font-black text-[#002868] leading-tight mb-2">{locationZone.name}</p>
-                                        <div className={`inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold ${locationZone.colorInfo.bgClass}/10 ${locationZone.colorInfo.textClass} border ${locationZone.colorInfo.textClass.replace('text', 'border')}/20`}>
-                                            <span className={`w-2 h-2 rounded-full mr-2 ${locationZone.colorInfo.bgClass} flex-shrink-0 animate-pulse`}></span>
-                                            {locationZone.riskLevel} Risk
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="pt-4 border-t border-gray-100 mt-auto">
-                                        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Location History</h3>
-                                        <ul className="space-y-2">
-                                            {user.history.map((id, index) => {
-                                                const z = getZoneById(id);
-                                                const times = ["12:00 PM", "12:15 PM", "12:45 PM"];
-                                                return z ? (
-                                                    <li key={index} className="flex items-center gap-3 text-sm">
-                                                        <span className="text-gray-400 font-bold w-20">{times[index] || "1:00 PM"}</span>
-                                                        <span className="text-gray-700 font-semibold">- {z.name}</span>
-                                                    </li>
-                                                ) : null;
-                                            })}
-                                        </ul>
-                                    </div>
-                                </div>
-
-                                {/* Right/Bottom - Suggestions */}
-                                <div className="space-y-6">
-                                    {/* Avoid Areas */}
-                                    <div className="bg-orange-50/50 p-4 rounded-xl border border-orange-100">
-                                        <h3 className="text-sm font-bold text-orange-800 uppercase tracking-widest flex items-center gap-2 mb-3">
-                                            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                                            Avoid Places
-                                        </h3>
-                                        <ul className="space-y-2">
-                                            {highRiskZones.slice(0, 2).map(z => (
-                                                <li key={z.id} className="flex flex-col text-sm border-l-2 border-orange-500 pl-3">
-                                                    <span className="text-gray-900 font-bold">{z.name}</span>
-                                                    <span className="text-orange-600 font-semibold">{z.density}% Full</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-
-                                    {/* Suggested Areas */}
-                                    <div className="bg-[#00AEEF]/5 p-4 rounded-xl border border-[#00AEEF]/20">
-                                        <h3 className="text-sm font-bold text-[#002868] uppercase tracking-widest flex items-center gap-2 mb-3">
-                                            <svg className="w-4 h-4 shrink-0 text-[#00AEEF]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/></svg>
-                                            Suggested
-                                        </h3>
-                                        <ul className="space-y-2">
-                                            {zones.filter(z => z.riskLevel === 'Low').slice(0, 2).map(z => (
-                                                <li key={z.id} className="flex flex-col text-sm border-l-2 border-[#00AEEF] pl-3">
-                                                    <span className="text-gray-900 font-bold">{z.name}</span>
-                                                    <span className="text-[#00AEEF] font-semibold">Only {z.density}% Full</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Help Center</h3>
+                            <p className="text-[10px] text-slate-400 font-medium uppercase mt-0.5 tracking-wider">Expert guides and live support</p>
                         </div>
-                    </section>
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-3">
+                        <button className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 hover:border-secondary transition-all text-[10px] font-bold uppercase tracking-widest text-slate-600">
+                            <Clock size={14} className="text-secondary" />
+                            Dashboard Basics
+                        </button>
+                        <button className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 hover:border-secondary transition-all text-[10px] font-bold uppercase tracking-widest text-slate-600">
+                            <ShieldAlert size={14} className="text-critical" />
+                            Alert Management
+                        </button>
+                        <button className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 hover:border-secondary transition-all text-[10px] font-bold uppercase tracking-widest text-slate-600">
+                            <Navigation size={14} className="text-indigo-600" />
+                            Safe Routes
+                        </button>
+                    </div>
                 </div>
-
-                {/* Right Column: Zone Progress Bars */}
-                <div className="lg:col-span-1 space-y-6">
-                    <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 h-full flex flex-col">
-                        <h2 className="text-lg font-bold text-[#002868] mb-6 flex items-center gap-2">
-                            <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20v-6"></path></svg>
-                            Live Zone Status
-                        </h2>
-                        
-                        <div className="space-y-5">
-                            {zones.map(z => (
-                                <div key={z.id} className="space-y-2">
-                                    <div className="flex justify-between items-end">
-                                        <span className="text-sm font-bold text-gray-800">{z.name}</span>
-                                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${z.colorInfo.bgClass}/10 ${z.colorInfo.textClass}`}>
-                                            {z.riskLevel}
-                                        </span>
-                                    </div>
-                                    <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                                        <div className={`h-2.5 rounded-full transition-all duration-1000 ease-out ${z.colorInfo.bgClass}`} style={{ width: `${z.density}%` }}></div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                </div>
-
             </div>
         </div>
     );

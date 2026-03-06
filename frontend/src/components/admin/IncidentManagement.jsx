@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertOctagon, Filter, Search, ChevronDown, MapPin, Clock, Shield, AlertTriangle, Heart, Users, X } from 'lucide-react';
+import { AlertOctagon, Filter, Search, ChevronDown, MapPin, Clock, Shield, AlertTriangle, Heart, Users, X, Plus, Download, Activity, ChevronRight } from 'lucide-react';
 
 const MOCK_INCIDENTS = [
     { id: 'INC-001', zone: 'North Bleachers', type: 'Overcrowding', severity: 'critical', status: 'Active', authority: 'Atharv', time: '17:32', description: 'Crowd density exceeded 95% capacity' },
@@ -17,12 +17,11 @@ export default function IncidentManagement() {
     const [filterZone, setFilterZone] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
-    const [showFilters, setShowFilters] = useState(false);
 
-    const severityColor = (sev) => {
-        if (sev === 'critical') return 'bg-red-100 text-red-700 border-red-200';
-        if (sev === 'warning') return 'bg-orange-100 text-orange-700 border-orange-200';
-        return 'bg-blue-100 text-blue-700 border-blue-200';
+    const getSeverityStyle = (sev) => {
+        if (sev === 'critical') return 'text-red-600 bg-red-50 border-red-100';
+        if (sev === 'warning') return 'text-orange-600 bg-orange-50 border-orange-100';
+        return 'text-blue-600 bg-blue-50 border-blue-100';
     };
 
     const statusColor = (st) => {
@@ -87,7 +86,7 @@ export default function IncidentManagement() {
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
                         >
-                            <option value="All Status">All Status</option>
+                            <option value="all">All Status</option>
                             <option value="Active">Active</option>
                             <option value="Resolved">Resolved</option>
                             <option value="Dispatched">Dispatched</option>
@@ -96,13 +95,13 @@ export default function IncidentManagement() {
 
                         <select
                             className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-600 outline-none hover:bg-slate-100 transition-colors"
-                            value={filterPriority}
-                            onChange={(e) => setFilterPriority(e.target.value)}
+                            value={filterSeverity}
+                            onChange={(e) => setFilterSeverity(e.target.value)}
                         >
-                            <option value="All Priority">All Priority</option>
-                            <option value="Critical">Critical</option>
-                            <option value="High">High</option>
-                            <option value="Medium">Medium</option>
+                            <option value="all">All Severity</option>
+                            <option value="critical">Critical</option>
+                            <option value="warning">Warning</option>
+                            <option value="low">Low</option>
                         </select>
                     </div>
                 </div>
@@ -147,8 +146,8 @@ export default function IncidentManagement() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border ${getPriorityStyle(incident.priority)}`}>
-                                            {incident.priority}
+                                        <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border ${getSeverityStyle(incident.severity)}`}>
+                                            {incident.severity}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">

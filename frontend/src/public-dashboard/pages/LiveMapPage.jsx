@@ -13,7 +13,7 @@ export default function LiveMapPage() {
         setIsCalculating(true);
         setShowRouteModal(true);
         setRouteInfo(null);
-        
+
         try {
             const res = await fetch('http://localhost:5000/api/routes/calculate-safe-path', {
                 method: 'POST',
@@ -32,8 +32,8 @@ export default function LiveMapPage() {
             // Fallback mock if backend is down
             setTimeout(() => {
                 setRouteInfo({
-                    eta: "4 mins", distance: "250m", safetyScore: 92, 
-                    routePath: "M80,350 L150,350 L150,150 L300,150 L380,220", 
+                    eta: "4 mins", distance: "250m", safetyScore: 92,
+                    routePath: "M80,350 L150,350 L150,150 L300,150 L380,220",
                     turnByTurn: [
                         "1. Head north from your current location, purposely avoiding the Gate 1 congestion.",
                         "2. Take a right before the Food Court (South) to avoid Critical crowding.",
@@ -50,32 +50,32 @@ export default function LiveMapPage() {
     // Architectural SVGs mapped to zone IDs
     const renderArchitecturalMap = () => {
         return (
-            <div className="w-full h-full bg-[#F5F7FB] p-4 lg:p-6 rounded-xl border border-gray-200 shadow-inner grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 overflow-y-auto content-start">
+            <div className="w-full h-full bg-slate-50 p-4 lg:p-6 rounded-xl border border-slate-100 shadow-inner grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 overflow-y-auto content-start">
                 {zones.map(z => {
                     const isSelected = selectedZone?.id === z.id;
                     const isDark = z.riskLevel === 'High' || z.riskLevel === 'Critical';
-                    
+
                     return (
-                        <div 
+                        <div
                             key={z.id}
                             onClick={() => setSelectedZone(z)}
                             className={`cursor-pointer transition-all duration-300 rounded-xl p-6 flex flex-col justify-between min-h-[160px] shadow-sm hover:shadow-md border-2 
-                                ${isSelected ? 'border-[#002868] ring-4 ring-[#002868]/10 shadow-lg scale-[1.02]' : 'border-transparent hover:border-[#00AEEF]/50'}
+                                ${isSelected ? 'border-secondary ring-4 ring-secondary/10 shadow-lg scale-[1.02]' : 'border-transparent hover:border-secondary/50'}
                             `}
                             style={{ backgroundColor: z.colorInfo.hex }}
                         >
                             <div className="flex justify-between items-start mb-4">
-                                <h3 className={`font-bold text-lg leading-tight pr-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                                <h3 className={`font-bold text-lg leading-tight pr-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>
                                     {z.name}
                                 </h3>
                                 {userLocationZone.id === z.id && (
                                     <span className="flex h-4 w-4 shrink-0 relative" title="You are here">
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                                        <span className={`relative inline-flex rounded-full h-4 w-4 ${isDark ? 'bg-white' : 'bg-[#002868]'}`}></span>
+                                        <span className={`relative inline-flex rounded-full h-4 w-4 ${isDark ? 'bg-white' : 'bg-primary'}`}></span>
                                     </span>
                                 )}
                             </div>
-                            
+
                             <div className="mt-auto">
                                 <div className={`text-4xl font-black tracking-tighter ${isDark ? 'text-white' : 'text-gray-900'}`}>
                                     {z.density}% <span className={`text-sm font-semibold tracking-normal ${isDark ? 'text-white/80' : 'text-gray-600'}`}>Full</span>
@@ -97,12 +97,12 @@ export default function LiveMapPage() {
         return (
             <div className="fixed inset-0 z-50 bg-[#002868]/60 backdrop-blur-md flex items-center justify-center pt-20 p-4 lg:p-10 transition-opacity">
                 <div className="bg-white w-full max-w-6xl h-full max-h-[85vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col lg:flex-row animate-in fade-in zoom-in-95 duration-300 relative">
-                    
+
                     {/* Interactive 2D Map Area */}
                     <div className="flex-1 bg-[#F8FAFC] p-8 relative flex items-center justify-center overflow-hidden border-r border-gray-100">
                         {/* Mock 2D SVG Venue Floor Plan */}
                         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]"></div>
-                        
+
                         <div className="relative w-full max-w-lg aspect-square bg-white rounded-2xl shadow-sm border border-gray-200">
                             <svg viewBox="0 0 500 500" className="w-full h-full text-gray-300 drop-shadow-sm">
                                 {/* Floorplan Base Lines */}
@@ -114,15 +114,15 @@ export default function LiveMapPage() {
                                 <line x1="370" y1="250" x2="460" y2="250" stroke="currentColor" strokeWidth="4" />
 
                                 {/* Zones Overlay based on live data */}
-                                <circle cx="80" cy="350" r="30" fill={zones.find(z=>z.id === userLocationZone.id)?.colorInfo?.hex || '#F59E0B'} opacity="0.8" />
+                                <circle cx="80" cy="350" r="30" fill={zones.find(z => z.id === userLocationZone.id)?.colorInfo?.hex || '#F59E0B'} opacity="0.8" />
                                 <text x="80" y="395" fontSize="12" fontWeight="bold" textAnchor="middle" fill="#4B5563">Start</text>
 
-                                <rect x="250" y="80" width="100" height="80" rx="10" fill={zones.find(z=>z.id === 'z4')?.colorInfo?.hex || '#EF4444'} opacity="0.6" />
+                                <rect x="250" y="80" width="100" height="80" rx="10" fill={zones.find(z => z.id === 'z4')?.colorInfo?.hex || '#EF4444'} opacity="0.6" />
                                 <text x="300" y="125" fontSize="12" fontWeight="bold" textAnchor="middle" fill="#7F1D1D">Food Court</text>
 
-                                <rect x="180" y="350" width="100" height="60" rx="10" fill={zones.find(z=>z.id === 'z1')?.colorInfo?.hex || '#F97316'} opacity="0.6" />
+                                <rect x="180" y="350" width="100" height="60" rx="10" fill={zones.find(z => z.id === 'z1')?.colorInfo?.hex || '#F97316'} opacity="0.6" />
                                 <text x="230" y="385" fontSize="12" fontWeight="bold" textAnchor="middle" fill="#9A3412">Gate 1</text>
-                                
+
                                 <circle cx="380" cy="220" r="30" fill={selectedZone?.colorInfo?.hex || '#10B981'} opacity="0.8" />
                                 <text x="380" y="270" fontSize="12" fontWeight="bold" textAnchor="middle" fill="#065F46">Destination</text>
 
@@ -134,7 +134,7 @@ export default function LiveMapPage() {
                                     </>
                                 )}
                             </svg>
-                            
+
                             {/* Live Calculating Overlay */}
                             {isCalculating && (
                                 <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center rounded-2xl flex-col gap-3">
@@ -166,7 +166,7 @@ export default function LiveMapPage() {
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">To</label>
                                 <div className="bg-[#F0F9FF] border border-blue-200 rounded-xl px-4 py-3 flex items-center gap-3 relative overflow-hidden">
-                                     <div className="absolute top-0 right-0 bottom-0 w-1 bg-[#00AEEF]"></div>
+                                    <div className="absolute top-0 right-0 bottom-0 w-1 bg-[#00AEEF]"></div>
                                     <div className="w-3 h-3 rounded-full bg-[#10B981] shrink-0"></div>
                                     <div className="font-bold text-[#002868]">{selectedZone.name}</div>
                                 </div>

@@ -44,9 +44,9 @@ export default function HelpCenter() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </div>
-                    <input 
-                        type="text" 
-                        placeholder="Search for articles, guides, or troubleshooting..." 
+                    <input
+                        type="text"
+                        placeholder="Search for articles, guides, or troubleshooting..."
                         className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-gray-100 focus:border-[#00AEEF] focus:ring-4 focus:ring-[#00AEEF]/10 outline-none transition-all shadow-sm text-lg"
                     />
                 </div>
@@ -59,12 +59,12 @@ export default function HelpCenter() {
                     { title: 'Alert Management', desc: 'Understanding critical, warning, and resolved levels.', icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9' },
                     { title: 'Safe Routes', desc: 'How predictive routing keeps pedestrians safe.', icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7' }
                 ].map((item, i) => (
-                    <div key={i} className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all group cursor-pointer">
-                        <div className="w-12 h-12 bg-[#F0F9FF] text-[#00AEEF] rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <div key={i} className="card-base group cursor-pointer hover:border-secondary">
+                        <div className="w-12 h-12 bg-slate-50 text-slate-400 group-hover:text-secondary group-hover:bg-slate-100 rounded-xl flex items-center justify-center mb-6 transition-all">
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon}></path></svg>
                         </div>
-                        <h3 className="text-xl font-bold text-[#002868] mb-2">{item.title}</h3>
-                        <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
+                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-2">{item.title}</h3>
+                        <p className="text-[11px] text-slate-500 font-medium uppercase tracking-wider leading-relaxed">{item.desc}</p>
                     </div>
                 ))}
             </div>
@@ -79,7 +79,7 @@ export default function HelpCenter() {
                         ) : (
                             faqs.map(faq => (
                                 <div key={faq.id} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                                    <button 
+                                    <button
                                         onClick={() => toggleFaq(faq.id)}
                                         className="w-full px-6 py-5 text-left flex justify-between items-center hover:bg-gray-50 transition-colors"
                                     >
@@ -116,7 +116,7 @@ export default function HelpCenter() {
                                     <span className="font-semibold">support@troublefree.ai</span>
                                 </div>
                             </div>
-                            <button 
+                            <button
                                 onClick={() => setIsTicketModalOpen(true)}
                                 className="w-full mt-8 bg-white text-[#002868] py-3 rounded-xl font-bold hover:bg-[#F0F9FF] transition-colors shadow-md"
                             >

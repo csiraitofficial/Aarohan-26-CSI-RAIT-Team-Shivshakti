@@ -24,10 +24,13 @@ const DashboardLayout = () => {
             '/authority': { title: 'Assigned Zones', desc: 'Your designated sectors and live telemetry' },
             '/authority/alerts': { title: 'Live Alerts', desc: 'Critical incidents requiring immediate action' },
             '/authority/flow': { title: 'Navigation Guidance', desc: 'Direct crowd flow to optimize venue safety' },
+            '/authority/status': { title: 'Deployment Status', desc: 'Real-time status of all personnel' },
 
-            '/public': { title: 'Public Crowd Map', desc: 'Real-time safety insights for your movements' },
+            '/public': { title: 'Crowd Map', desc: 'Real-time safety insights for your movements' },
+            '/public/map': { title: 'Live Venue Map', desc: 'Interactive environmental layout' },
             '/public/routes': { title: 'Safe Routes', desc: 'AI-guided navigation through least crowded areas' },
-            '/public/waittimes': { title: 'Gate Density', desc: 'Check entry/exit times to avoid congestion' },
+            '/public/alerts': { title: 'Safety Alerts', desc: 'Live environment broadcasts' },
+            '/public/help': { title: 'Help Center', desc: 'Expert guides and live support' },
         };
 
         return contexts[pathname] || { title: 'Dashboard', desc: 'TroubleFree AI Command Center' };

@@ -76,9 +76,15 @@ const UnifiedTopBar = ({ toggleSidebar, title, description }) => {
                     <Search size={18} className="text-gray-400" />
                     <input
                         type="text"
-                        placeholder="Search analytics..."
+                        placeholder="Search zones or locations..."
                         className="ml-3 bg-transparent outline-none w-full text-sm font-medium text-slate-700"
                     />
+                </div>
+
+                {/* Live System Indicator */}
+                <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-full h-8">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest">Live System</span>
                 </div>
 
                 {/* Notification Bell */}

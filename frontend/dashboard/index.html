@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TroubleFree AI - Public Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="global-header">
+        <div class="header-content">
+            <div class="logo-area">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" stroke="#FFFFFF" stroke-width="2"/>
+                    <path d="M12 6V12L16 16" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <h1>TroubleFree AI</h1>
+            </div>
+            <div class="header-info">
+                Live Public Dashboard
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <!-- Left / Center Column -->
+        <div class="main-column">
+            <!-- Module 1: Overview & Safety Hero Section -->
+            <section class="card module-overview" aria-label="Overview and Status">
+                <h2 id="greeting-text">Good Afternoon, Traveler</h2>
+                
+                <div id="safety-badge" class="safety-badge">
+                    <span class="badge-icon" id="badge-icon-container">
+                        <!-- Icon injected via JS -->
+                    </span>
+                    <span class="badge-text" id="badge-text">Calculating status...</span>
+                </div>
+
+                <div class="nearby-zones-wrapper">
+                    <h3>Nearby Zones</h3>
+                    <div id="nearby-zones-list" class="nearby-zones-list">
+                        <!-- Zones injected by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Module 2: The Interactive Live Crowd Map -->
+            <section class="card module-map" aria-label="Live Venue Map">
+                <h2>Live Crowd Map</h2>
+                <div class="map-container" id="venue-map" role="group" aria-label="Abstract Map of Venue Zones">
+                    <svg viewBox="0 0 800 500" class="abstract-map" preserveAspectRatio="xMidYMid meet">
+                        <!-- Polygons representing zones -->
+                        <g id="map-shapes">
+                            <!-- Injected by JS -->
+                        </g>
+                        <!-- User marker -->
+                        <circle id="user-location-marker" cx="0" cy="0" r="10" class="pulse-dot"></circle>
+                    </svg>
+                    
+                    <!-- Hover Tooltip -->
+                    <div id="map-tooltip" class="map-tooltip">
+                        <div class="tooltip-title" id="tt-name">Zone Name</div>
+                        <div class="tooltip-bar-bg">
+                            <div class="tooltip-bar-fill" id="tt-bar"></div>
+                        </div>
+                        <div class="tooltip-details" id="tt-details">0 / 0 people</div>
+                    </div>
+                </div>
+                <div class="map-legend">
+                    <div class="legend-item"><span class="legend-dot color-safe"></span> Safe (0-50%)</div>
+                    <div class="legend-item"><span class="legend-dot color-moderate"></span> Moderate (50-75%)</div>
+                    <div class="legend-item"><span class="legend-dot color-high"></span> High Risk (75-90%)</div>
+                    <div class="legend-item"><span class="legend-dot color-critical"></span> Critical (90%+)</div>
+                </div>
+            </section>
+
+            <!-- Module 3: Safe Route Suggestion Engine -->
+            <section class="card module-route" aria-label="Route Suggestions">
+                <h2>Suggested Routes to Destination</h2>
+                <nav class="route-tabs" aria-label="Route options">
+                    <button class="tab-btn active" data-target="tab-fastest">Fastest</button>
+                    <button class="tab-btn" data-target="tab-safest">Safest</button>
+                    <button class="tab-btn" data-target="tab-accessible">Accessible</button>
+                </nav>
+
+                <div class="tab-content-container">
+                    <!-- Fastest Tab -->
+                    <div id="tab-fastest" class="tab-pane active fade-in">
+                        <div class="route-info">
+                            <span class="route-time">Estimated: 4 mins</span>
+                        </div>
+                        <ul class="route-timeline">
+                            <li><span class="timeline-dot"></span><span class="route-loc" id="rt-fast-start">Start</span></li>
+                            <li><span class="timeline-dot"></span>Ticketing</li>
+                            <li><span class="timeline-dot"></span><span class="route-loc" id="rt-fast-end">Destination</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Safest Tab -->
+                    <div id="tab-safest" class="tab-pane">
+                        <div class="route-info">
+                            <span class="route-badge badge-safe">Bypasses Food Court Congestion</span>
+                            <span class="route-time">Estimated: 6 mins</span>
+                        </div>
+                        <ul class="route-timeline">
+                            <li><span class="timeline-dot"></span><span class="route-loc" id="rt-safe-start">Start</span></li>
+                            <li><span class="timeline-dot"></span>Exit Gate 2</li>
+                            <li><span class="timeline-dot"></span><span class="route-loc" id="rt-safe-end">Destination</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Accessible Tab -->
+                    <div id="tab-accessible" class="tab-pane">
+                        <div class="route-info">
+                            <span class="route-badge badge-info">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/><path d="M12 7v8M8 11h8M10 22v-7l-2-2M14 22v-7l2-2"/></svg>
+                                Stair-free route
+                            </span>
+                            <span class="route-time">Estimated: 7 mins</span>
+                        </div>
+                        <ul class="route-timeline">
+                            <li><span class="timeline-dot"></span><span class="route-loc" id="rt-acc-start">Start</span></li>
+                            <li><span class="timeline-dot"></span>Elevator C</li>
+                            <li><span class="timeline-dot"></span><span class="route-loc" id="rt-acc-end">Destination</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Right SideBar Column -->
+        <div class="sidebar-column">
+            <!-- Module 5: Wait Time Estimation & Predictive Analytics -->
+            <section class="card module-wait-times" aria-label="Wait Time Estimation">
+                <h2>Current Queues</h2>
+                <div id="wait-times-list" class="wait-times-list">
+                    <!-- Injected via JS -->
+                </div>
+                
+                <div class="ai-insight-box">
+                    <div class="ai-sparkle">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/>
+                        </svg>
+                    </div>
+                    <p class="ai-text"><strong>TroubleFree AI</strong> predicts peak congestion at the <span id="ai-pred-zone">Food Court</span> will clear up in approximately <span id="predicted-clear-time">45</span> minutes.</p>
+                </div>
+            </section>
+
+            <!-- Module 4: Real-Time Alerts Feed -->
+            <section class="card module-alerts" aria-label="Live Alerts Feed">
+                <div class="alerts-header">
+                    <h2>Live Alerts Feed</h2>
+                    <span class="live-indicator"><span class="dot-pulse-small"></span> Live</span>
+                </div>
+                <div id="alerts-feed" class="alerts-feed">
+                    <!-- Injected via JS -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -19,11 +19,11 @@ const IncidentFeed = ({ alerts }) => {
 
     const getSeverityStyle = (severity) => {
         switch (severity) {
-            case 'CRITICAL': return 'border-l-red-500 bg-red-900 bg-opacity-10';
-            case 'HIGH': return 'border-l-orange-500 bg-orange-900 bg-opacity-10';
-            case 'MEDIUM': return 'border-l-amber-500 bg-amber-900 bg-opacity-10';
-            case 'LOW': return 'border-l-emerald-500 bg-emerald-900 bg-opacity-10';
-            default: return 'border-l-gray-500 bg-gray-900 bg-opacity-10';
+            case 'CRITICAL': return 'border-l-red-500 bg-red-900/10';
+            case 'HIGH': return 'border-l-orange-500 bg-orange-900/10';
+            case 'MEDIUM': return 'border-l-amber-500 bg-amber-900/10';
+            case 'LOW': return 'border-l-emerald-500 bg-emerald-900/10';
+            default: return 'border-l-gray-500 bg-gray-900/10';
         }
     };
 
@@ -37,7 +37,7 @@ const IncidentFeed = ({ alerts }) => {
     }
 
     return (
-        <div className="glass-card flex flex-col h-full max-h-[400px] border-opacity-40">
+        <div className="glass-card flex flex-col h-full max-h-[400px] border-current/40">
             <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-200">
                 <div className="flex items-center space-x-2">
                     <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
@@ -58,7 +58,7 @@ const IncidentFeed = ({ alerts }) => {
                     {sortedAlerts.map((alert) => (
                         <div
                             key={alert._id}
-                            className={`p-3 rounded overflow-hidden border border-gray-200 border-l-4 ${getSeverityStyle(alert.severity).replace('bg-opacity-10', 'bg-opacity-5')} transition-all bg-white backdrop-blur-md shadow-sm`}
+                            className={`p-3 rounded overflow-hidden border border-gray-200 border-l-4 ${getSeverityStyle(alert.severity).replace('/10', '/5')} transition-all bg-white backdrop-blur-md shadow-sm`}
                         >
                             <div className="flex justify-between items-start mb-2">
                                 <div className="flex items-center space-x-2">

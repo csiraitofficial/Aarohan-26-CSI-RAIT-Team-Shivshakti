@@ -247,7 +247,7 @@ const SimulatedLiveMap = ({ zones, alerts }) => {
     const activeAlert = alerts && alerts.find(a => a.status === 'OPEN' && a.severity === 'CRITICAL');
 
     return (
-        <div className="glass-card flex flex-col h-full min-h-[500px] relative overflow-hidden border-opacity-40">
+        <div className="glass-card flex flex-col h-full min-h-[500px] relative overflow-hidden border-current/40">
 
             {/* Header / UI Overlay */}
             <div className="flex justify-between items-center mb-4 z-10 relative">
@@ -305,7 +305,7 @@ const SimulatedLiveMap = ({ zones, alerts }) => {
                 </Canvas>
 
                 {/* Status Overlay Legend */}
-                <div className="absolute bottom-4 left-4 bg-[#0B1120] bg-opacity-80 p-3 rounded border border-gray-700 backdrop-blur-md shadow-[0_0_20px_rgba(0,0,0,0.5)] pointer-events-none">
+                <div className="absolute bottom-4 left-4 bg-[#0B1120]/80 p-3 rounded border border-gray-700 backdrop-blur-md shadow-[0_0_20px_rgba(0,0,0,0.5)] pointer-events-none">
                     <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 border-b border-gray-700 pb-1">Telemetry HUD Density</h4>
                     <div className="space-y-1.5">
                         <div className="flex items-center space-x-2 text-xs text-gray-300"><span className="w-3 h-3 rounded bg-[#00FF00] shadow-[0_0_8px_#00FF00]"></span><span>Nominal (&lt;50%)</span></div>

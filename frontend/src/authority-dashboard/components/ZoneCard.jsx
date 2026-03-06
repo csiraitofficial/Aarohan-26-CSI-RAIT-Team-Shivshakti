@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import '../Theme.css';
 
 const ZoneCard = ({ zone }) => {
   const { zoneName, currentOccupancy, capacity } = zone;
@@ -10,15 +9,15 @@ const ZoneCard = ({ zone }) => {
 
   // Determine Risk Level and Color Classes
   const getRiskDetails = (densityValue) => {
-    if (densityValue < 0.50) return { level: 'LOW', colorClass: 'status-glow-low', textClass: 'text-emerald-400', bgClass: 'bg-emerald-500' };
-    if (densityValue < 0.75) return { level: 'MEDIUM', colorClass: 'status-glow-medium', textClass: 'text-amber-400', bgClass: 'bg-amber-500' };
-    if (densityValue < 0.90) return { level: 'HIGH', colorClass: 'status-glow-high', textClass: 'text-orange-400', bgClass: 'bg-orange-500' };
-    return { level: 'CRITICAL', colorClass: 'status-glow-critical', textClass: 'text-red-400', bgClass: 'bg-red-500' };
+    if (densityValue < 0.50) return { level: 'LOW', color: 'text-emerald-500', bg: 'bg-emerald-500', border: 'border-emerald-100', bgSoft: 'bg-emerald-50' };
+    if (densityValue < 0.75) return { level: 'MEDIUM', color: 'text-amber-500', bg: 'bg-amber-500', border: 'border-amber-100', bgSoft: 'bg-amber-50' };
+    if (densityValue < 0.90) return { level: 'HIGH', color: 'text-orange-500', bg: 'bg-orange-500', border: 'border-orange-100', bgSoft: 'bg-orange-50' };
+    return { level: 'CRITICAL', color: 'text-critical', bg: 'bg-critical', border: 'border-critical/20', bgSoft: 'bg-critical/5' };
   };
 
   const riskDetails = useMemo(() => getRiskDetails(density), [density]);
 
-  // Mock calculation for demo purposes
+  // Mock calculation for time to critical
   const getTimeToCritical = (densityValue) => {
     if (densityValue >= 0.9) return "CRITICAL REACHED";
     if (densityValue >= 0.75) return "12m to Critical";
@@ -29,63 +28,68 @@ const ZoneCard = ({ zone }) => {
   const timeToCriticalText = getTimeToCritical(density);
 
   return (
-    <div className={`glass-card ${riskDetails.colorClass} flex flex-col justify-between p-4 relative overflow-hidden transition-all duration-300`}>
-      {/* Background abstract shape */}
-      <div className={`absolute -right-10 -top-10 w-32 h-32 rounded-full blur-[40px] opacity-10 ${riskDetails.bgClass} pointer-events-none`}></div>
+    <div className={`card-base hover:border-slate-200 transition-all duration-300 relative overflow-hidden group`}>
+      {/* Risk Indicator Bar (Side) */}
+      <div className={`absolute left-0 top-0 bottom-0 w-1 ${riskDetails.bg}`}></div>
 
-      <div className="flex justify-between items-start z-10">
-        <div>
-          <h3 className="text-lg font-bold text-[var(--color-primary)] truncate pr-2" title={zoneName}>{zoneName}</h3>
-          {density >= 0.5 && (
-            <div className="flex items-center space-x-1 mt-1 text-[10px] font-mono tracking-wider">
-              <svg className="w-3 h-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-              <span className={`${density >= 0.75 ? 'text-red-400 animate-pulse' : 'text-amber-400'}`}>{timeToCriticalText}</span>
-            </div>
-          )}
+      <div className="flex justify-between items-start mb-4">
+        <div className="space-y-1">
+          <h3 className="text-sm font-bold text-slate-800 tracking-tight flex items-center gap-2">
+            {zoneName}
+            {density >= 0.5 && (
+              <span className={`w-1.5 h-1.5 rounded-full ${riskDetails.bg} ${density >= 0.75 ? 'animate-pulse' : ''}`}></span>
+            )}
+          </h3>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+            <span className={`px-1.5 py-0.5 rounded ${riskDetails.bgSoft} ${riskDetails.color} border ${riskDetails.border}`}>
+              {riskDetails.level}
+            </span>
+            {density >= 0.5 && (
+              <span className="flex items-center gap-1">
+                <span className="text-slate-300">•</span>
+                {timeToCriticalText}
+              </span>
+            )}
+          </p>
         </div>
-
-        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-white bg-opacity-80 border border-opacity-20 ${riskDetails.textClass} border-current`}>
-          {riskDetails.level}
-        </span>
       </div>
 
-      <div className="flex flex-col mt-4 z-10">
-        <div className="flex items-end justify-between mb-1">
-          <div className="flex flex-col">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-500">Occupancy</span>
-            <span className="text-2xl font-black text-[var(--color-primary)] tracking-tighter">
-              {currentOccupancy.toLocaleString()} <span className="text-xs font-medium text-gray-500">/ {capacity.toLocaleString()}</span>
-            </span>
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Occupancy</p>
+          <p className="text-sm font-bold text-slate-700">
+            {currentOccupancy.toLocaleString()}
+            <span className="text-slate-300 ml-1">/ {capacity.toLocaleString()}</span>
+          </p>
+        </div>
+        <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Density</p>
+          <div className="flex items-baseline gap-1">
+            <p className={`text-sm font-bold ${riskDetails.color}`}>{densityPercentage}%</p>
+            <p className="text-[9px] text-slate-300 font-medium">Cap. Util</p>
           </div>
-          <div className="flex space-x-4 px-4 bg-gray-50 border border-gray-100 rounded-lg py-1.5 shadow-inner">
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex justify-between items-end">
+          <div className="flex gap-3">
             <div className="flex flex-col">
-              <span className="text-[9px] font-bold text-gray-400 tracking-widest uppercase">Entry</span>
-              <span className="text-sm font-bold text-emerald-600">+{Math.floor(density * 40)}/m</span>
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Inflow</span>
+              <span className="text-[10px] font-bold text-emerald-600">+{Math.floor(density * 40)}/m</span>
             </div>
-            <div className="w-px bg-gray-200"></div>
-            <div className="flex flex-col text-right">
-              <span className="text-[9px] font-bold text-gray-400 tracking-widest uppercase">Exit</span>
-              <span className="text-sm font-bold text-gray-500">-{Math.max(2, Math.floor(density * 15))}/m</span>
+            <div className="flex flex-col">
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Outflow</span>
+              <span className="text-[10px] font-bold text-slate-400">-{Math.max(2, Math.floor(density * 15))}/m</span>
             </div>
-          </div>
-          <div className="flex flex-col items-end">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-[#8BA3CB]">Density</span>
-            <span className={`text-xl font-bold ${riskDetails.textClass}`}>
-              {densityPercentage}%
-            </span>
           </div>
         </div>
 
-        {/* Progress Bar Container */}
-        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden shadow-inner mt-2">
+        {/* Progress Bar */}
+        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all duration-1000 ease-out`}
-            style={{
-              width: `${Math.min(densityPercentage, 100)}%`,
-              backgroundColor: density < 0.5 ? 'var(--risk-low)' :
-                density < 0.75 ? 'var(--risk-medium)' :
-                  density < 0.9 ? 'var(--risk-high)' : 'var(--risk-critical)'
-            }}
+            className={`h-full rounded-full transition-all duration-1000 ease-out ${riskDetails.bg}`}
+            style={{ width: `${Math.min(densityPercentage, 100)}%` }}
           ></div>
         </div>
       </div>

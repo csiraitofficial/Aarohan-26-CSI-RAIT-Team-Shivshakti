@@ -1,1 +1,54 @@
 @import "tailwindcss";
+
+@theme {
+  --color-primary: #0F3D73;
+  --color-secondary: #1E6BD6;
+  --color-accent: #FF6B35;
+  --color-bg-main: #F5F7FB;
+  --color-safe: #10B981;
+  --color-warning: #F59E0B;
+  --color-critical: #EF4444;
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+
+  --radius-xl: 0.75rem;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-main text-gray-900 font-sans;
+  }
+}
+
+@layer components {
+  .card-base {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white font-bold py-3 px-6 rounded-lg hover:bg-primary/90 transition shadow-md active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-primary border-2 border-primary font-bold py-3 px-6 rounded-lg hover:bg-gray-50 transition shadow-md active:scale-95;
+  }
+
+  .status-badge {
+    @apply px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest border;
+  }
+
+  .status-safe {
+    @apply bg-safe/10 text-safe border-safe/20;
+  }
+
+  .status-warning {
+    @apply bg-warning/10 text-warning border-warning/20;
+  }
+
+  .status-critical {
+    @apply bg-critical/10 text-critical border-critical/20;
+  }
+}

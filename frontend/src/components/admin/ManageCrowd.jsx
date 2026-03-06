@@ -105,44 +105,42 @@ export default function ManageCrowd() {
 
     // --- VIEW 3: ACTIVE (Operations Center) ---
     return (
-        <div className="space-y-6 text-gray-800 animate-in fade-in duration-700 font-sans">
-
-            {/* Header */}
-            <div className="flex justify-between items-center bg-white p-5 rounded-xl shadow-md border-l-4 border-[#002868]">
+        <div className="space-y-6">
+            {/* Operations Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-[#002868] flex items-center gap-2">
-                        <ShieldCheck className="w-6 h-6 text-[#00AEEF]" />
-                        Stadium Operations Center
-                    </h2>
-                    <div className="flex items-center gap-2 mt-2">
-                        <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-full uppercase tracking-wider flex items-center gap-1 border border-green-200">
-                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                            Live Tracking Active
+                    <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Operations Command Center</h2>
+                    <div className="flex items-center gap-3 mt-2">
+                        <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-lg uppercase tracking-wider flex items-center gap-2 border border-emerald-100">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Live Telemetry
                         </span>
-                        <span className="text-sm font-bold text-gray-600">{venueConfig ? venueConfig.venueName : 'DY Patil Stadium'}</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <MapPin size={12} />
+                            {venueConfig ? venueConfig.venueName : 'Main Arena'}
+                        </span>
                     </div>
                 </div>
 
                 {/* Organizer Controls */}
-                <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 flex items-center gap-2">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest px-2">Scenarios</span>
+                <div className="bg-white p-1.5 rounded-xl border border-slate-100 flex items-center gap-1.5 shadow-sm">
                     <button
                         onClick={() => handleScenario('NORMAL')}
-                        className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${scenario === 'NORMAL' ? 'bg-[#002868] text-white shadow' : 'text-gray-500 hover:bg-gray-200'}`}
+                        className={`px-4 py-2 text-[10px] font-bold rounded-lg uppercase tracking-wider transition-all ${scenario === 'NORMAL' ? 'bg-primary text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}
                     >
-                        Normal Entry
+                        Normal
                     </button>
                     <button
                         onClick={() => handleScenario('HALF_TIME')}
-                        className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${scenario === 'HALF_TIME' ? 'bg-[#FF6B35] text-white shadow' : 'text-gray-500 hover:bg-gray-200'}`}
+                        className={`px-4 py-2 text-[10px] font-bold rounded-lg uppercase tracking-wider transition-all ${scenario === 'HALF_TIME' ? 'bg-accent text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}
                     >
-                        Half-Time Peak
+                        Peak
                     </button>
                     <button
                         onClick={() => handleScenario('EMERGENCY')}
-                        className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors flex items-center gap-1 ${scenario === 'EMERGENCY' ? 'bg-red-600 text-white shadow' : 'text-red-600 hover:bg-red-50'}`}
+                        className={`px-4 py-2 text-[10px] font-bold rounded-lg uppercase tracking-wider transition-all flex items-center gap-2 ${scenario === 'EMERGENCY' ? 'bg-critical text-white shadow-md' : 'text-critical hover:bg-critical/5'}`}
                     >
-                        <AlertTriangle className="w-3 h-3" /> Panic/Emergency
+                        <AlertTriangle size={12} /> Emergency
                     </button>
                 </div>
             </div>
@@ -150,25 +148,25 @@ export default function ManageCrowd() {
             {/* Live Counter Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Total Attendance */}
-                <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 flex flex-col justify-between hover:shadow-lg transition-shadow">
+                <div className="card-base group hover:border-secondary transition-all">
                     <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide flex items-center gap-2">
-                            <Users className="w-5 h-5 text-[#002868]" /> Live Attendance
+                        <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <Users size={16} /> Total Attendance
                         </h3>
-                        <span className="text-[10px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-full uppercase tracking-wider border border-green-100 animate-pulse">Live Feed</span>
+                        <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-widest animate-pulse border border-emerald-100">Real-time</span>
                     </div>
                     <div>
-                        <p className="text-4xl font-black text-[#002868] tracking-tight">{attendance.toLocaleString()}</p>
+                        <p className="text-4xl font-bold text-slate-800 tracking-tight">{attendance.toLocaleString()}</p>
                         <div className="flex justify-between items-end mt-2">
-                            <span className="text-sm text-gray-400 font-medium">Capacity: {currentCapacity.toLocaleString()}</span>
-                            <span className="text-sm font-black text-[#FF6B35]">
-                                {((attendance / currentCapacity) * 100).toFixed(1)}% Full
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Target: {currentCapacity.toLocaleString()}</span>
+                            <span className="text-xs font-bold text-secondary">
+                                {((attendance / currentCapacity) * 100).toFixed(1)}% Usage
                             </span>
                         </div>
                         {/* Progress Bar */}
-                        <div className="w-full bg-gray-100 h-2 rounded-full mt-3 overflow-hidden">
+                        <div className="w-full bg-slate-100 h-2 rounded-full mt-3 overflow-hidden">
                             <div
-                                className={`h-full transition-all duration-1000 ${attendance / currentCapacity > 0.9 ? 'bg-red-500' : 'bg-[#002868]'}`}
+                                className={`h-full transition-all duration-1000 shadow-inner ${attendance / currentCapacity > 0.9 ? 'bg-critical' : 'bg-secondary'}`}
                                 style={{ width: `${(attendance / currentCapacity) * 100}%` }}
                             ></div>
                         </div>
@@ -176,36 +174,38 @@ export default function ManageCrowd() {
                 </div>
 
                 {/* Flow Rate */}
-                <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 flex flex-col justify-between hover:shadow-lg transition-shadow">
-                    <h3 className="text-sm font-bold text-gray-400 uppercase flex items-center gap-2 mb-4">
-                        <Activity className="w-5 h-5 text-[#00AEEF]" /> Entry Flow Rate
+                <div className="card-base group hover:border-secondary transition-all">
+                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-4">
+                        <Activity size={16} /> Movement Flow Rate
                     </h3>
                     <div className="flex-1 flex flex-col justify-center">
-                        <div className="flex items-center gap-3">
-                            <p className="text-5xl font-black text-gray-800 tracking-tighter">{flowRate}</p>
-                            <p className="text-sm font-bold text-gray-400 leading-tight uppercase">People <br /> Per Min</p>
+                        <div className="flex items-baseline gap-2">
+                            <p className="text-5xl font-bold text-slate-800 tracking-tighter">{flowRate}</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">PPM</p>
                         </div>
-                        <div className={`mt-5 inline-flex items-center gap-1.5 text-sm font-bold px-3 py-1.5 rounded-lg w-max ${flowRate > 0 ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
-                            {flowRate > 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                            {flowRate > 0 ? 'Steady Entry Flow' : 'Exiting Phase Active'}
+                        <div className={`mt-5 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg w-max border ${flowRate > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+                            {flowRate > 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                            {flowRate > 0 ? 'Inflow Active' : 'Emergency Egress'}
                         </div>
                     </div>
                 </div>
 
                 {/* Mobile Density */}
-                <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 flex flex-col justify-between hover:shadow-lg transition-shadow">
-                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide flex items-center gap-2 mb-4">
-                        <Wifi className="w-5 h-5 text-[#FF6B35]" /> Network Saturation
+                <div className="card-base group hover:border-secondary transition-all">
+                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-4">
+                        <Wifi size={16} /> Device Saturation
                     </h3>
                     <div className="flex-1 flex flex-col justify-center">
-                        <p className="text-5xl font-black text-gray-800 tracking-tighter">{networkLoad}%</p>
-                        <p className="text-sm font-bold text-[#FF6B35] mt-1 uppercase tracking-wide">Mobile device density monitor</p>
+                        <div className="flex items-baseline gap-2">
+                            <p className="text-5xl font-bold text-slate-800 tracking-tighter">{networkLoad}%</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Load</p>
+                        </div>
 
                         {scenario !== 'NORMAL' && (
-                            <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-100 flex items-start gap-2 shadow-sm animate-in slide-in-from-right-2">
-                                <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                                <p className="text-xs font-bold text-red-800 leading-snug">
-                                    {scenario === 'HALF_TIME' ? 'Critical load shifting to Concourses.' : 'Emergency bandwidth overrides active.'}
+                            <div className="mt-4 p-3 bg-red-50 rounded-xl border border-red-100 flex items-start gap-3 shadow-sm animate-in slide-in-from-right-2">
+                                <AlertTriangle size={14} className="text-red-500 shrink-0 mt-0.5" />
+                                <p className="text-[10px] font-bold text-red-700 uppercase tracking-wide leading-relaxed">
+                                    {scenario === 'HALF_TIME' ? 'Surge detected in transit zones.' : 'Network spectrum fully utilized.'}
                                 </p>
                             </div>
                         )}

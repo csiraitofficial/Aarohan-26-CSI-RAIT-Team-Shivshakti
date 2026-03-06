@@ -68,216 +68,198 @@ export default function UserManagement() {
     };
 
     return (
-        <div className="space-y-6 font-sans animate-in fade-in duration-500">
-
+        <div className="space-y-6">
             {/* Header */}
-            <div className="flex justify-between items-start">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-[#002868]">User Management</h2>
-                    <p className="text-gray-500 text-sm mt-1">{totalUsers} registered users</p>
+                    <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest">User Management</h2>
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mt-0.5">{totalUsers} registered users in the system</p>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-100 rounded-full shadow-sm">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span className="text-xs font-bold text-gray-700">{onlineCount} Online</span>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-100 rounded-lg shadow-sm">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{onlineCount} Online</span>
                 </div>
             </div>
 
             {/* Filter Metric Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
                 <button
                     onClick={() => setRoleFilter(roleFilter === 'PUBLIC' ? 'ALL' : 'PUBLIC')}
-                    className={`flex items-center gap-4 bg-white p-5 rounded-2xl border transition-all duration-200 text-left ${roleFilter === 'PUBLIC' ? 'border-emerald-400 shadow-md ring-2 ring-emerald-50' : 'border-gray-100 shadow-sm hover:border-emerald-200 hover:shadow-md'}`}
+                    className={`flex items-center gap-4 card-base !p-5 transition-all duration-300 text-left cursor-pointer group hover:border-secondary ${roleFilter === 'PUBLIC' ? 'border-primary ring-2 ring-primary/10' : ''}`}
                 >
-                    <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                        <Users className="w-6 h-6" />
+                    <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+                        <Users size={20} />
                     </div>
                     <div>
-                        <p className="text-2xl font-black text-gray-800">{publicUsers}</p>
-                        <p className="text-sm font-medium text-gray-500">Public Users</p>
+                        <p className="text-2xl font-bold text-slate-800 tracking-tight group-hover:text-primary transition-colors">{publicUsers}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Public Users</p>
                     </div>
                 </button>
 
                 <button
                     onClick={() => setRoleFilter(roleFilter === 'AUTHORITY' ? 'ALL' : 'AUTHORITY')}
-                    className={`flex items-center gap-4 bg-white p-5 rounded-2xl border transition-all duration-200 text-left ${roleFilter === 'AUTHORITY' ? 'border-orange-400 shadow-md ring-2 ring-orange-50' : 'border-gray-100 shadow-sm hover:border-orange-200 hover:shadow-md'}`}
+                    className={`flex items-center gap-4 card-base !p-5 transition-all duration-300 text-left cursor-pointer group hover:border-secondary ${roleFilter === 'AUTHORITY' ? 'border-primary ring-2 ring-primary/10' : ''}`}
                 >
-                    <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
-                        <Shield className="w-6 h-6" />
+                    <div className="w-10 h-10 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0 border border-orange-100">
+                        <Shield size={20} />
                     </div>
                     <div>
-                        <p className="text-2xl font-black text-gray-800">{authorityUsers}</p>
-                        <p className="text-sm font-medium text-gray-500">Authorities</p>
+                        <p className="text-2xl font-bold text-slate-800 tracking-tight group-hover:text-primary transition-colors">{authorityUsers}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Authorities</p>
                     </div>
                 </button>
 
                 <button
                     onClick={() => setRoleFilter(roleFilter === 'ADMIN' ? 'ALL' : 'ADMIN')}
-                    className={`flex items-center gap-4 bg-white p-5 rounded-2xl border transition-all duration-200 text-left ${roleFilter === 'ADMIN' ? 'border-blue-400 shadow-md ring-2 ring-blue-50' : 'border-gray-100 shadow-sm hover:border-blue-200 hover:shadow-md'}`}
+                    className={`flex items-center gap-4 card-base !p-5 transition-all duration-300 text-left cursor-pointer group hover:border-secondary ${roleFilter === 'ADMIN' ? 'border-primary ring-2 ring-primary/10' : ''}`}
                 >
-                    <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                        <ShieldCheck className="w-6 h-6" />
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20">
+                        <ShieldCheck size={20} />
                     </div>
                     <div>
-                        <p className="text-2xl font-black text-gray-800">{adminUsers}</p>
-                        <p className="text-sm font-medium text-gray-500">Admins</p>
+                        <p className="text-2xl font-bold text-slate-800 tracking-tight group-hover:text-primary transition-colors">{adminUsers}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Administrators</p>
                     </div>
                 </button>
-
             </div>
 
             {/* List Header & Search */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-                <div className="p-5 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="card-base !p-0 overflow-hidden flex flex-col hover:border-slate-200">
+                <div className="p-5 border-b border-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/50">
                     <div>
-                        <h3 className="text-lg font-bold text-gray-800">
-                            {roleFilter === 'ALL' ? 'All Users' : `${roleFilter.charAt(0) + roleFilter.slice(1).toLowerCase()}s`}
+                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">
+                            {roleFilter === 'ALL' ? 'Directory Listing' : `${roleFilter} Listing`}
                         </h3>
-                        <p className="text-sm text-gray-400 mt-0.5">System users and their roles</p>
+                        <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mt-0.5">Manage user access</p>
                     </div>
 
                     <div className="flex items-center gap-3 w-full sm:w-auto">
                         <div className="relative flex-1 sm:w-64">
-                            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                             <input
                                 type="text"
-                                placeholder="Search users..."
+                                placeholder="Search by name or email..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002868] focus:border-transparent transition-all"
+                                className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary transition-all shadow-sm"
                             />
                         </div>
+
 
                         <div className="relative">
                             <button
                                 onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
-                                className={`p-2 border rounded-lg transition-colors shrink-0 flex items-center gap-2 ${isFilterMenuOpen || statusFilter !== 'ALL' ? 'border-[#002868] text-[#002868] bg-blue-50' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                                className={`p-2 border rounded-lg transition-all shadow-sm flex items-center gap-2 ${isFilterMenuOpen || statusFilter !== 'ALL' ? 'border-primary text-primary bg-primary/5' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
                             >
-                                <Filter className="w-4 h-4" />
+                                <Filter size={16} />
+                                {statusFilter !== 'ALL' && <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>}
                             </button>
 
                             {isFilterMenuOpen && (
-                                <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 overflow-hidden">
-
-                                    {/* Role Filter Section */}
-                                    <div className="p-3 border-b border-gray-50 bg-gray-50/50">
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Role Filter</p>
+                                <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Filters</span>
+                                        <button onClick={() => { setRoleFilter('ALL'); setStatusFilter('ALL'); }} className="text-[9px] font-bold text-primary hover:text-primary/80 uppercase tracking-wider">Reset</button>
                                     </div>
-                                    <div className="flex flex-col p-2 space-y-1">
-                                        <button
-                                            onClick={() => setRoleFilter('ALL')}
-                                            className={`px-3 py-2 text-sm text-left rounded-lg transition-colors ${roleFilter === 'ALL' ? 'bg-[#002868] text-white font-medium shadow-sm' : 'text-gray-600 hover:bg-gray-50 font-medium'}`}
-                                        >
-                                            All Roles
-                                        </button>
-                                        <button
-                                            onClick={() => setRoleFilter('PUBLIC')}
-                                            className={`px-3 py-2 text-sm text-left rounded-lg transition-colors flex items-center justify-between ${roleFilter === 'PUBLIC' ? 'bg-[#002868] text-white font-medium shadow-sm' : 'text-gray-600 hover:bg-gray-50 font-medium'}`}
-                                        >
-                                            Public
-                                            <span className={`w-2 h-2 rounded-full ${roleFilter === 'PUBLIC' ? 'bg-emerald-400' : 'bg-emerald-500'}`}></span>
-                                        </button>
-                                        <button
-                                            onClick={() => setRoleFilter('AUTHORITY')}
-                                            className={`px-3 py-2 text-sm text-left rounded-lg transition-colors flex items-center justify-between ${roleFilter === 'AUTHORITY' ? 'bg-[#002868] text-white font-medium shadow-sm' : 'text-gray-600 hover:bg-gray-50 font-medium'}`}
-                                        >
-                                            Authority
-                                            <span className={`w-2 h-2 rounded-full ${roleFilter === 'AUTHORITY' ? 'bg-orange-400' : 'bg-orange-500'}`}></span>
-                                        </button>
-                                        <button
-                                            onClick={() => setRoleFilter('ADMIN')}
-                                            className={`px-3 py-2 text-sm text-left rounded-lg transition-colors flex items-center justify-between ${roleFilter === 'ADMIN' ? 'bg-[#002868] text-white font-medium shadow-sm' : 'text-gray-600 hover:bg-gray-50 font-medium'}`}
-                                        >
-                                            Admin
-                                            <span className={`w-2 h-2 rounded-full ${roleFilter === 'ADMIN' ? 'bg-blue-400' : 'bg-blue-500'}`}></span>
-                                        </button>
-                                    </div>
-
-                                    {/* Status Filter Section */}
-                                    <div className="p-3 border-y border-gray-50 bg-gray-50/50 mt-1">
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Status Filter</p>
-                                    </div>
-                                    <div className="flex flex-col p-2 space-y-1">
-                                        <button
-                                            onClick={() => setStatusFilter('ALL')}
-                                            className={`px-3 py-2 text-sm text-left rounded-lg transition-colors ${statusFilter === 'ALL' ? 'bg-[#002868] text-white font-medium shadow-sm' : 'text-gray-600 hover:bg-gray-50 font-medium'}`}
-                                        >
-                                            All Users
-                                        </button>
-                                        <button
-                                            onClick={() => setStatusFilter('ONLINE')}
-                                            className={`px-3 py-2 text-sm text-left rounded-lg transition-colors flex items-center justify-between ${statusFilter === 'ONLINE' ? 'bg-[#002868] text-white font-medium shadow-sm' : 'text-gray-600 hover:bg-gray-50 font-medium'}`}
-                                        >
-                                            Online
-                                            <span className={`w-2 h-2 rounded-full ${statusFilter === 'ONLINE' ? 'bg-emerald-400' : 'bg-emerald-500'}`}></span>
-                                        </button>
-                                        <button
-                                            onClick={() => setStatusFilter('OFFLINE')}
-                                            className={`px-3 py-2 text-sm text-left rounded-lg transition-colors flex items-center justify-between ${statusFilter === 'OFFLINE' ? 'bg-[#002868] text-white font-medium shadow-sm' : 'text-gray-600 hover:bg-gray-50 font-medium'}`}
-                                        >
-                                            Offline
-                                            <span className={`w-2 h-2 rounded-full ${statusFilter === 'OFFLINE' ? 'bg-gray-400' : 'bg-gray-300'}`}></span>
-                                        </button>
-                                    </div>
-                                    <div className="p-2 border-t border-gray-50 mt-1">
-                                        <button onClick={() => setIsFilterMenuOpen(false)} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-1.5 rounded-lg text-sm font-bold transition-colors">Done</button>
+                                    <div className="p-2 space-y-3">
+                                        <div>
+                                            <p className="px-2 pb-1.5 text-[9px] font-bold text-slate-400 uppercase tracking-widest">By Role</p>
+                                            <div className="flex flex-wrap gap-1 px-1">
+                                                {['ALL', 'PUBLIC', 'AUTHORITY', 'ADMIN'].map(role => (
+                                                    <button
+                                                        key={role}
+                                                        onClick={() => setRoleFilter(role)}
+                                                        className={`px-2 py-1 text-[9px] font-bold rounded-md border transition-all ${roleFilter === role ? 'bg-primary border-primary text-white shadow-sm' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50'}`}
+                                                    >
+                                                        {role}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p className="px-2 pb-1.5 text-[9px] font-bold text-slate-400 uppercase tracking-widest">By Status</p>
+                                            <div className="flex flex-col gap-0.5 px-1 pb-1">
+                                                {['ALL', 'ONLINE', 'OFFLINE'].map(status => (
+                                                    <button
+                                                        key={status}
+                                                        onClick={() => setStatusFilter(status)}
+                                                        className={`px-2 py-1.5 text-[10px] font-bold rounded-md text-left transition-all ${statusFilter === status ? 'bg-primary/5 text-primary' : 'text-slate-500 hover:bg-slate-50'}`}
+                                                    >
+                                                        {status === 'ALL' ? 'All Users' : status === 'ONLINE' ? 'Active Only' : 'Inactive Only'}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             )}
                         </div>
-
                     </div>
                 </div>
 
                 {/* User List */}
-                <div className="flex flex-col">
+                <div className="flex flex-col bg-white">
                     {filteredUsers.length > 0 ? (
                         filteredUsers.map((user, index) => (
-                            <div key={user.id} className={`flex items-center justify-between p-4 px-6 hover:bg-gray-50/50 transition-colors ${index !== filteredUsers.length - 1 ? 'border-b border-gray-50' : ''}`}>
-
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-10 h-10 flex flex-col items-center justify-center rounded-full font-black text-sm ${getRoleAvatarStyle(user.role)}`}>
+                            <div key={user.id} className={`flex items-center justify-between p-4 px-5 hover:bg-slate-50/50 transition-colors group ${index !== filteredUsers.length - 1 ? 'border-b border-slate-50' : ''}`}>
+                                <div className="flex items-center gap-3.5">
+                                    <div className={`w-10 h-10 flex flex-col items-center justify-center rounded-lg font-bold text-xs shadow-sm transition-transform group-hover:scale-105 ${getRoleAvatarStyle(user.role)}`}>
                                         {user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <p className="font-bold text-gray-800">{user.name}</p>
-                                            <span className={`text-[9px] font-black px-2 py-0.5 rounded-sm uppercase tracking-wider border ${getRoleBadge(user.role)}`}>
+                                            <p className="font-bold text-slate-800 text-sm">{user.name}</p>
+                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-widest shadow-sm ${getRoleBadge(user.role)}`}>
                                                 {user.role}
                                             </span>
                                         </div>
-                                        <p className="text-xs font-medium text-gray-400 mt-0.5">{user.email}</p>
+                                        <p className="text-xs font-medium text-slate-500">{user.email}</p>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-6">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'Now' ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300'}`}></span>
-                                        <span className={`text-xs font-bold ${user.status === 'Now' ? 'text-gray-700' : 'text-gray-400'}`}>
-                                            {user.status}
-                                        </span>
+                                <div className="flex items-center gap-8">
+                                    <div className="hidden md:flex flex-col items-end">
+                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Last Activity</p>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'Now' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></span>
+                                            <span className={`text-xs font-bold ${user.status === 'Now' ? 'text-slate-700' : 'text-slate-500'}`}>
+                                                {user.status === 'Now' ? 'Active Now' : user.status}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <button className="px-4 py-1.5 border border-gray-200 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-50 transition-colors">
-                                        Manage
+                                    <button className="flex items-center gap-1.5 pl-3 pr-2.5 py-1.5 bg-white border border-slate-200 text-slate-500 hover:text-secondary hover:border-secondary hover:bg-secondary/5 rounded-lg text-xs font-bold transition-all shadow-sm">
+                                        View <MoreHorizontal size={14} />
                                     </button>
                                 </div>
-
                             </div>
                         ))
                     ) : (
-                        <div className="p-10 text-center flex flex-col items-center justify-center">
-                            <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
-                                <Search className="w-5 h-5 text-gray-300" />
+                        <div className="p-16 text-center flex flex-col items-center justify-center bg-white">
+                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100 shadow-inner">
+                                <Search className="w-6 h-6 text-slate-300" />
                             </div>
-                            <p className="text-gray-500 font-medium">No users found matching your filters.</p>
+                            <h4 className="text-sm font-bold text-slate-800 uppercase tracking-widest">No users found</h4>
+                            <p className="text-xs text-slate-500 font-medium max-w-xs mx-auto mt-2">We couldn't find any users matching your current filters or search query.</p>
                             <button
                                 onClick={() => { setSearchQuery(''); setRoleFilter('ALL'); setStatusFilter('ALL'); }}
-                                className="mt-2 text-sm text-[#00AEEF] font-bold hover:underline"
+                                className="mt-6 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-bold transition-all"
                             >
                                 Clear all filters
                             </button>
                         </div>
                     )}
+                </div>
+
+                {/* Footer / Pagination Placeholder */}
+                <div className="p-4 px-5 bg-slate-50/50 border-t border-slate-50 flex items-center justify-between">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Showing {filteredUsers.length} records</p>
+                    <div className="flex items-center gap-1.5">
+                        {[1].map(p => (
+                            <button key={p} className={`w-7 h-7 rounded-md text-xs font-bold border transition-all ${p === 1 ? 'bg-primary border-primary text-white shadow-sm' : 'bg-white border-slate-200 text-slate-400 hover:border-slate-300'}`}>
+                                {p}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>

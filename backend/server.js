@@ -8,6 +8,7 @@ import authorityRoutes from './routes/authorityRoutes.js';
 import routeRoutes from './routes/routeRoutes.js';
 import infoRoutes from './routes/infoRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ app.use('/api/authority', authorityRoutes);
 app.use('/api/routes', routeRoutes);
 app.use('/api/info', infoRoutes);
 app.use('/api/tickets', ticketRoutes);
+app.use('/api/auth', authRoutes);
 
 // Test route
 app.get('/api/test', (req, res) => {

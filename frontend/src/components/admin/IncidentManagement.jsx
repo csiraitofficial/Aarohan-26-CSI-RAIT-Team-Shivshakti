@@ -47,128 +47,128 @@ export default function IncidentManagement() {
         return true;
     });
 
-    const zones = [...new Set(MOCK_INCIDENTS.map(i => i.zone))];
-    const activeCount = MOCK_INCIDENTS.filter(i => i.status === 'Active').length;
-    const criticalCount = MOCK_INCIDENTS.filter(i => i.severity === 'critical').length;
-
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            {/* Header Area */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 className="text-3xl font-black text-[#002868] tracking-tight">Incident Management</h2>
-                    <p className="text-gray-500 font-medium mt-1">Monitor and respond to active incidents</p>
+                    <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Incident Management</h2>
+                    <p className="text-sm text-slate-500 font-medium mt-1">Monitor and respond to real-time events</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-100 rounded-xl">
-                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                        <span className="text-xs font-black text-red-600">{activeCount} Active</span>
-                    </div>
-                    <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 border border-orange-100 rounded-xl">
-                        <AlertTriangle className="w-3.5 h-3.5 text-orange-500" />
-                        <span className="text-xs font-black text-orange-600">{criticalCount} Critical</span>
-                    </div>
+                    <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl font-bold text-sm shadow-sm hover:bg-primary/90 transition-all">
+                        <Plus size={18} /> Log Incident
+                    </button>
+                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all shadow-sm">
+                        <Download size={18} /> Export Results
+                    </button>
                 </div>
             </div>
 
-            {/* Search & Filters */}
-            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-                <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search incidents by ID, zone, or type..."
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#00AEEF] focus:border-transparent outline-none"
-                        />
-                    </div>
-                    <div className="flex gap-2">
-                        <select value={filterSeverity} onChange={e => setFilterSeverity(e.target.value)} className="px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold text-gray-600 focus:ring-2 focus:ring-[#00AEEF] outline-none cursor-pointer">
-                            <option value="all">All Severity</option>
-                            <option value="critical">Critical</option>
-                            <option value="warning">Warning</option>
-                            <option value="low">Low</option>
-                        </select>
-                        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold text-gray-600 focus:ring-2 focus:ring-[#00AEEF] outline-none cursor-pointer">
-                            <option value="all">All Status</option>
+            {/* Filters and Stats */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div className="lg:col-span-3 bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
+                    <div className="flex flex-wrap items-center gap-4">
+                        {/* Search Bar */}
+                        <div className="flex-1 min-w-[200px] flex items-center bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 focus-within:ring-1 focus-within:ring-secondary transition-all">
+                            <Search size={18} className="text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Search by ID, zone, or type..."
+                                className="ml-3 bg-transparent outline-none w-full text-sm font-medium text-slate-700"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+
+                        {/* Filter Selects */}
+                        <select
+                            className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-600 outline-none hover:bg-slate-100 transition-colors"
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                        >
+                            <option value="All Status">All Status</option>
                             <option value="Active">Active</option>
+                            <option value="Resolved">Resolved</option>
                             <option value="Dispatched">Dispatched</option>
                             <option value="Monitoring">Monitoring</option>
-                            <option value="Resolved">Resolved</option>
                         </select>
-                        <select value={filterZone} onChange={e => setFilterZone(e.target.value)} className="px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold text-gray-600 focus:ring-2 focus:ring-[#00AEEF] outline-none cursor-pointer hidden md:block">
-                            <option value="all">All Zones</option>
-                            {zones.map(z => <option key={z} value={z}>{z}</option>)}
+
+                        <select
+                            className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-600 outline-none hover:bg-slate-100 transition-colors"
+                            value={filterPriority}
+                            onChange={(e) => setFilterPriority(e.target.value)}
+                        >
+                            <option value="All Priority">All Priority</option>
+                            <option value="Critical">Critical</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
                         </select>
+                    </div>
+                </div>
+
+                <div className="bg-primary p-6 rounded-xl shadow-lg shadow-primary/10 flex flex-col justify-center">
+                    <p className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em] mb-1">Active Now</p>
+                    <div className="flex items-end gap-2">
+                        <p className="text-3xl font-bold text-white tracking-tight">{filteredIncidents.filter(i => i.status === 'Active').length}</p>
+                        <p className="text-xs font-medium text-emerald-300 pb-1.5 flex items-center gap-1">
+                            <Activity size={12} /> Live response
+                        </p>
                     </div>
                 </div>
             </div>
 
-            {/* Incident Table */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            {/* Incidents Table */}
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                <th className="px-6 py-4">Incident</th>
-                                <th className="px-6 py-4">Zone</th>
-                                <th className="px-6 py-4">Type</th>
-                                <th className="px-6 py-4">Severity</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4">Authority</th>
-                                <th className="px-6 py-4">Time</th>
+                            <tr className="bg-slate-50/80 border-b border-slate-100">
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Incident ID</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Type</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Zone / Location</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Priority</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Time</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {filteredIncidents.map((inc) => {
-                                const TypeIcon = typeIcon(inc.type);
-                                return (
-                                    <tr key={inc.id} className="hover:bg-gray-50/50 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <span className="text-xs font-black text-[#002868] bg-blue-50 px-2 py-1 rounded border border-blue-100">{inc.id}</span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                                                <span className="text-sm font-bold text-gray-700">{inc.zone}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <TypeIcon className="w-3.5 h-3.5 text-gray-400" />
-                                                <span className="text-sm font-bold text-gray-700">{inc.type}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${severityColor(inc.severity)}`}>
-                                                {inc.severity}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg ${statusColor(inc.status)}`}>
-                                                {inc.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <Shield className="w-3.5 h-3.5 text-gray-400" />
-                                                <span className={`text-sm font-bold ${inc.authority === 'Unassigned' ? 'text-red-500 italic' : 'text-gray-700'}`}>{inc.authority}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-1.5 text-gray-400">
-                                                <Clock className="w-3.5 h-3.5" />
-                                                <span className="text-xs font-bold">{inc.time}</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                        <tbody className="divide-y divide-slate-50">
+                            {filteredIncidents.map((incident) => (
+                                <tr key={incident.id} className="hover:bg-slate-50/50 transition-colors group">
+                                    <td className="px-6 py-4">
+                                        <span className="text-xs font-bold text-primary bg-primary/5 px-2 py-1 rounded">#{incident.id}</span>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-bold text-slate-700">{incident.type}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2">
+                                            <MapPin size={14} className="text-slate-300" />
+                                            <span className="text-sm font-medium text-slate-600">{incident.zone}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border ${getPriorityStyle(incident.priority)}`}>
+                                            {incident.priority}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className={`w-1.5 h-1.5 rounded-full ${incident.status === 'Resolved' ? 'bg-emerald-500' : incident.status === 'Active' ? 'bg-red-500' : 'bg-orange-500'}`}></div>
+                                            <span className="text-sm font-bold text-slate-700">{incident.status}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-xs font-medium text-slate-400">{incident.time}</td>
+                                    <td className="px-6 py-4 text-right">
+                                        <button className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 hover:shadow-sm transition-all text-slate-400 hover:text-secondary group-hover:scale-110">
+                                            <ChevronRight size={18} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
+
                 {filteredIncidents.length === 0 && (
                     <div className="p-12 text-center">
                         <AlertOctagon className="w-12 h-12 text-gray-300 mx-auto mb-3" />

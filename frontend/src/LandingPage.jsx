@@ -6,12 +6,12 @@ const LandingPage = () => {
   return (
     // Added 'relative' and 'overflow-hidden' to contain our background effects
     <div className="relative min-h-screen bg-bgMain font-sans overflow-hidden">
-      
+
       {/* ========================================= */}
       {/* ---> BACKGROUND EFFECTS (NO IMAGES NEEDED!) */}
       {/* 1. Subtle Tech Grid Pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#cbd5e1_1px,transparent_1px),linear-gradient(to_bottom,#cbd5e1_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] -z-10 opacity-60"></div>
-      
+
       {/* 2. Glowing Ambient Smart City Blue Orb */}
       <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-secondary opacity-20 blur-[120px] rounded-full pointer-events-none -z-10"></div>
       {/* ========================================= */}
@@ -24,7 +24,7 @@ const LandingPage = () => {
         </div>
         <div className="flex gap-6 items-center">
           <Link to="/login" className="text-primary font-bold hover:text-secondary transition">Login</Link>
-          <Link to="/signup" className="px-6 py-2 bg-primary text-white font-bold rounded-lg hover:bg-opacity-90 transition shadow-md">
+          <Link to="/signup" className="px-6 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition shadow-md">
             Sign Up
           </Link>
         </div>
@@ -36,18 +36,18 @@ const LandingPage = () => {
           Smart City Infrastructure
         </div>
         <h1 className="text-5xl md:text-6xl font-black text-primary mb-6 max-w-4xl leading-tight">
-          Next-Generation Crowd <br/><span className="text-secondary">Risk Mitigation</span> System
+          Next-Generation Crowd <br /><span className="text-secondary">Risk Mitigation</span> System
         </h1>
         <p className="text-lg text-gray-600 mb-10 max-w-2xl">
           Empowering citizens with real-time safety data and equipping authorities with AI-driven zone control to prevent disasters before they happen.
         </p>
-        
+
         <div className="flex gap-4">
-          <Link to="/signup" className="px-8 py-4 bg-accent text-white font-bold rounded-lg hover:bg-opacity-90 transition shadow-lg uppercase tracking-widest">
+          <Link to="/signup" className="px-8 py-4 bg-accent text-white font-bold rounded-lg hover:bg-accent/90 transition shadow-lg uppercase tracking-widest">
             Get Started Free
           </Link>
           <Link to="/signup-authority" className="px-8 py-4 bg-white text-primary border-2 border-primary font-bold rounded-lg hover:bg-gray-50 transition shadow-lg uppercase tracking-widest">
-            Official Access
+            Apply for Verification
           </Link>
         </div>
       </main>

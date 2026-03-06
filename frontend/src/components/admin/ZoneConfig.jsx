@@ -48,22 +48,19 @@ export default function ZoneConfig({ setActiveTab }) {
     };
 
     return (
-        <div className="space-y-6 font-sans animate-in fade-in duration-500">
+        <div className="space-y-6">
             {/* Header Section */}
-            <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex justify-between items-center">
                 <div>
-                    <h2 className="text-2xl font-bold text-[#002868] flex items-center gap-2">
-                        <LayoutDashboard className="w-6 h-6 text-[#00AEEF]" />
-                        Zone Configuration
-                    </h2>
-                    <p className="text-gray-500 text-sm mt-1">Manage monitoring sectors, capacity limits, and alert thresholds.</p>
+                    <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Zone Monitoring Console</h2>
+                    <p className="text-[10px] text-slate-400 font-medium uppercase mt-0.5 tracking-wider">Configure monitoring sectors and safety thresholds</p>
                 </div>
                 <button
                     onClick={handleAddZone}
-                    className="flex items-center gap-2 bg-[#002868] text-white px-5 py-2.5 rounded-lg shadow-md hover:bg-[#001f52] transition-colors font-bold text-sm"
+                    className="btn-primary !py-2 !px-4 text-xs flex items-center gap-2"
                 >
-                    <Plus className="w-4 h-4" />
-                    Add Zone
+                    <Plus size={16} />
+                    Add Sector
                 </button>
             </div>
 
@@ -73,59 +70,59 @@ export default function ZoneConfig({ setActiveTab }) {
                     const metrics = getZoneMetrics(zone.current, zone.capacity);
 
                     return (
-                        <div key={zone.id} className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                        <div key={zone.id} className="card-base !p-0 overflow-hidden group hover:border-secondary transition-all">
                             {/* Card Header */}
-                            <div className="p-5 border-b border-gray-50">
+                            <div className="p-5 border-b border-slate-50">
                                 <div className="flex justify-between items-start mb-2">
-                                    <h3 className="font-bold text-gray-800 text-lg line-clamp-1">{zone.name}</h3>
+                                    <h3 className="font-bold text-slate-800 text-lg tracking-tight group-hover:text-primary transition-colors">{zone.name}</h3>
                                     <button
                                         onClick={() => setActiveTab('command-center')}
-                                        className="text-gray-400 hover:text-[#00AEEF] transition-colors bg-gray-50 p-1.5 rounded-md"
+                                        className="text-slate-300 hover:text-secondary transition-colors bg-slate-50 p-1.5 rounded-lg"
                                     >
-                                        <Edit2 className="w-4 h-4" />
+                                        <Edit2 size={14} />
                                     </button>
                                 </div>
-                                <div className="flex items-center gap-1.5 text-sm text-gray-500 mt-1">
-                                    <MapPin className="w-3.5 h-3.5" />
+                                <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                                    <MapPin size={12} />
                                     <span className="truncate">{zone.location}</span>
                                 </div>
                             </div>
 
                             {/* Card Body (Metrics) */}
-                            <div className="p-5 bg-gray-50/50">
-                                <div className="flex justify-between items-end mb-3">
+                            <div className="p-5 bg-slate-50/30">
+                                <div className="flex justify-between items-end mb-4">
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
-                                            <p className="text-[10px] font-black tracking-widest text-gray-400 uppercase">Live Occupancy</p>
+                                            <p className="text-[10px] font-bold tracking-[0.1em] text-slate-400 uppercase">Current Capacity</p>
                                             {zone.isHistory && (
-                                                <span className="text-[9px] font-bold bg-[#002868]/10 text-[#002868] px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
-                                                    Manage Crowd Tracker
+                                                <span className="text-[9px] font-bold bg-secondary/10 text-secondary px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                                    Tracked
                                                 </span>
                                             )}
                                         </div>
                                         <div className="flex items-baseline gap-1">
-                                            <span className="text-2xl font-black text-[#002868] tracking-tight">{zone.current.toLocaleString()}</span>
-                                            <span className="text-xs font-bold text-gray-500">/ {zone.capacity.toLocaleString()}</span>
+                                            <span className="text-2xl font-bold text-slate-800 tracking-tight">{zone.current.toLocaleString()}</span>
+                                            <span className="text-xs font-medium text-slate-400">/ {zone.capacity.toLocaleString()}</span>
                                         </div>
                                     </div>
-                                    <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded border ${metrics.badgeColor}`}>
+                                    <span className={`px-2 py-1 text-[9px] font-bold uppercase tracking-widest rounded border ${metrics.badgeColor}`}>
                                         {metrics.status}
                                     </span>
                                 </div>
 
                                 {/* Progress Bar */}
-                                <div className="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden mb-2">
+                                <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mb-3">
                                     <div
-                                        className={`h-full transition-all duration-1000 ease-out ${metrics.barColor}`}
+                                        className={`h-full transition-all duration-1000 ease-out ${metrics.barColor} shadow-inner`}
                                         style={{ width: `${Math.min(Number(metrics.percentage), 100)}%` }}
                                     ></div>
                                 </div>
 
-                                <div className="flex justify-between items-center text-xs">
-                                    <span className="font-bold text-gray-400">{metrics.percentage}% Full</span>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{metrics.percentage}% Density</span>
                                     {metrics.status === 'Critical' && (
-                                        <span className="flex items-center gap-1 text-red-600 font-bold">
-                                            <AlertTriangle className="w-3 h-3" /> Overload Warning
+                                        <span className="flex items-center gap-1 text-critical font-bold text-[10px] uppercase tracking-widest animate-pulse">
+                                            <AlertTriangle size={10} /> Critical Load
                                         </span>
                                     )}
                                 </div>

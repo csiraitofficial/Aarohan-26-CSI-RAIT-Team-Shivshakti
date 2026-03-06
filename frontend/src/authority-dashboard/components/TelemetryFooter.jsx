@@ -14,7 +14,7 @@ const TelemetryFooter = () => {
     }, []);
 
     return (
-        <footer className="w-full bg-white bg-opacity-90 backdrop-blur border-t border-gray-200 py-3 px-6 mt-auto z-10">
+        <footer className="w-full bg-white/90 backdrop-blur border-t border-gray-200 py-3 px-6 mt-auto z-10">
             <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row justify-between items-center text-[10px] font-mono text-gray-500 tracking-widest uppercase">
 
                 <div className="flex items-center space-x-6 mb-2 sm:mb-0">

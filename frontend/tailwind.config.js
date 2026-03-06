@@ -1,13 +1,17 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
   theme: {
     extend: {
       colors: {
-        primary: "#002868",    // Deep Blue from your system
-        secondary: "#00AEEF",  // Bright Blue from your system
-        accent: "#FF6B35",     // Orange from your system
-        bgMain: "#F5F7FB",     // Soft Background from your system
+        primary: "#002868",
+        secondary: "#00AEEF",
+        accent: "#FF6B35",
+        bgMain: "#F5F7FB",
+        background: "#F5F7FB",
       },
     },
   },

@@ -1,35 +1,33 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
-import PublicDashboard from './public-dashboard/PublicDashboard';
-import AuthorityDashboard from './authority-dashboard/AuthorityDashboard';
-import AdminDashboard from './admin-dashboard/AdminDashboard';
+// import PublicDashboard from './public-dashboard/PublicDashboard';
+import AuthorityDashboard from './authority-dashboard/pages/AuthorityDashboard';
+import AlertsDashboard from './authority-dashboard/pages/AlertsDashboard';
+import ZonesDashboard from './authority-dashboard/pages/ZonesDashboard';
+import CrowdFlowDashboard from './authority-dashboard/pages/CrowdFlowDashboard';
+import ReportsDashboard from './authority-dashboard/pages/ReportsDashboard';
+import ProfileDashboard from './authority-dashboard/pages/ProfileDashboard';
+// import AdminDashboard from './admin-dashboard/AdminDashboard';
+
+const PublicDashboard = () => <div>Public Dashboard (Currently on Authority Branch)</div>;
+const AdminDashboard = () => <div>Admin Dashboard (Currently on Authority Branch)</div>;
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center text-2xl font-bold flex-col">
-      Tailwind is working
-      <div className="w-full text-base font-normal mt-4">
-        <Router>
-          <div style={{ fontFamily: 'sans-serif', padding: '20px' }}>
-            <nav style={{ marginBottom: '20px', paddingBottom: '10px', borderBottom: '1px solid #ccc' }}>
-              <ul style={{ listStyle: 'none', display: 'flex', gap: '20px', padding: 0, margin: 0, justifyContent: 'center' }}>
-                <li><Link to="/public" style={{ textDecoration: 'none', color: '#007bff' }}>Public</Link></li>
-                <li><Link to="/authority" style={{ textDecoration: 'none', color: '#007bff' }}>Authority</Link></li>
-                <li><Link to="/admin" style={{ textDecoration: 'none', color: '#007bff' }}>Admin</Link></li>
-              </ul>
-            </nav>
-
-            <main className="text-center">
-              <Routes>
-                <Route path="/public" element={<PublicDashboard />} />
-                <Route path="/authority" element={<AuthorityDashboard />} />
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/" element={<Navigate to="/public" replace />} />
-              </Routes>
-            </main>
-          </div>
-        </Router>
-      </div>
+    <div className="w-screen h-screen overflow-hidden flex flex-col bg-[var(--color-background)]">
+      <Router>
+        <Routes>
+          <Route path="/public" element={<PublicDashboard />} />
+          <Route path="/authority" element={<AuthorityDashboard />} />
+          <Route path="/authority/zones" element={<ZonesDashboard />} />
+          <Route path="/authority/alerts" element={<AlertsDashboard />} />
+          <Route path="/authority/flow" element={<CrowdFlowDashboard />} />
+          <Route path="/authority/reports" element={<ReportsDashboard />} />
+          <Route path="/authority/profile" element={<ProfileDashboard />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/" element={<Navigate to="/authority" replace />} />
+        </Routes>
+      </Router>
     </div>
   );
 }

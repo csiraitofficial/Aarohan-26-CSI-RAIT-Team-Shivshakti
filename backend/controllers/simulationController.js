@@ -1,4 +1,5 @@
 import Zone from "../models/Zone.js";
+import Alert from "../models/Alert.js";
 import { calculateDensityAndRisk } from "../services/densityService.js";
 
 // Helper function to get random integer between min and max (inclusive)
@@ -9,73 +10,105 @@ const getRandomInt = (min, max) => {
 // Start a simulation
 export const startSimulation = async (req, res) => {
     try {
-        const { zoneId, mode } = req.body;
+        const { mode } = req.body;
 
-        if (!zoneId || !mode) {
-            return res.status(400).json({ message: "zoneId and mode are required" });
+        if (!mode) {
+            return res.status(400).json({ message: "Mode is required" });
         }
 
-        const zone = await Zone.findById(zoneId);
-        if (!zone) {
-            return res.status(404).json({ message: "Zone not found" });
+        const zones = await Zone.find();
+        if (!zones || zones.length === 0) {
+            return res.status(404).json({ message: "No zones found to simulate" });
         }
 
-        // Clear any existing simulation interval for this zone if we stored references,
-        // but building a simple version as requested
+        let totalGeneratedAlerts = 0;
 
-        setInterval(async () => {
-            try {
-                // Find the zone fresh each iteration
-                const currentZone = await Zone.findById(zoneId);
-                if (!currentZone) return;
+        // Loop through all zones and apply simulation logic
+        for (let zone of zones) {
+            let entry = 0;
+            let exit = 0;
 
-                let entry = 0;
-                let exit = 0;
-
-                switch (mode) {
-                    case "NORMAL":
-                        entry = getRandomInt(1, 5);
-                        exit = getRandomInt(0, 3);
-                        break;
-                    case "RISING":
-                        entry = getRandomInt(5, 10);
-                        exit = getRandomInt(0, 2);
-                        break;
-                    case "CRITICAL":
-                        entry = getRandomInt(10, 20);
-                        exit = getRandomInt(0, 1);
-                        break;
-                    default:
-                        console.log(`Unknown mode: ${mode}`);
-                        return;
-                }
-
-                currentZone.entryCount += entry;
-                currentZone.exitCount += exit;
-                currentZone.currentOccupancy =
-                    currentZone.entryCount - currentZone.exitCount;
-
-                if (currentZone.currentOccupancy < 0) {
-                    currentZone.currentOccupancy = 0;
-                }
-
-                // Update risk level organically during the simulation
-                const { riskLevel } = calculateDensityAndRisk(currentZone);
-                currentZone.riskLevel = riskLevel;
-
-                await currentZone.save();
-
-                console.log(
-                    `Simulation Update → Zone: ${currentZone.zoneName} Occupancy: ${currentZone.currentOccupancy} Risk: ${currentZone.riskLevel}`
-                );
-            } catch (err) {
-                console.error("Error updating simulation zone:", err);
+            switch (mode) {
+                case "NORMAL":
+                    entry = getRandomInt(5, 15);
+                    exit = getRandomInt(3, 10);
+                    break;
+                case "RISING":
+                    entry = getRandomInt(20, 50);
+                    exit = getRandomInt(5, 15);
+                    break;
+                case "CRITICAL":
+                    entry = getRandomInt(60, 120);
+                    exit = getRandomInt(5, 10);
+                    break;
+                default:
+                    return res.status(400).json({ message: `Unknown mode: ${mode}` });
             }
-        }, 5000);
+
+            zone.entryCount = entry; // We store the RATE for this tick, not total sum, so the frontend can read "Entry Rate"
+            zone.exitCount = exit;
+
+            // Update Occupancy
+            zone.currentOccupancy = Math.max(0, Math.min(zone.capacity, zone.currentOccupancy + entry - exit));
+
+            // Density Math
+            const density = zone.capacity > 0 ? (zone.currentOccupancy / zone.capacity) : 0;
+
+            let riskLevel = "LOW";
+            if (density > 0.9) riskLevel = "CRITICAL";
+            else if (density > 0.75) riskLevel = "HIGH";
+            else if (density > 0.5) riskLevel = "MEDIUM";
+
+            zone.riskLevel = riskLevel;
+
+            // Auto-Generate Alerts
+            // 1. Density Alerts
+            if (density > 0.75) {
+                const severity = density > 0.9 ? "CRITICAL" : "HIGH";
+                const message = density > 0.9 ? "Immediate action required. Zone overcrowded." : "Crowd density increasing rapidly.";
+                const alertType = density > 0.9 ? "Overcrowding" : "High Density";
+
+                // Check if ACTIVE alert already exists for this zone and type
+                const existingAlert = await Alert.findOne({ zoneId: zone._id, alertType: alertType, status: "ACTIVE" });
+
+                if (!existingAlert) {
+                    await Alert.create({
+                        zoneId: zone._id,
+                        alertType: alertType,
+                        severity: severity,
+                        message: message,
+                        status: "ACTIVE"
+                    });
+                    totalGeneratedAlerts++;
+                }
+            }
+
+            // 2. Surge Alerts
+            const netFlow = entry - exit;
+            if (netFlow > 30) {
+                const existingSurge = await Alert.findOne({ zoneId: zone._id, alertType: "Surge", status: "ACTIVE" });
+                if (!existingSurge) {
+                    await Alert.create({
+                        zoneId: zone._id,
+                        alertType: "Surge",
+                        severity: "WARNING",
+                        message: `Rapid crowd growth detected (+${netFlow} net flow)`,
+                        status: "ACTIVE"
+                    });
+                    totalGeneratedAlerts++;
+                }
+            }
+
+            await zone.save();
+        }
+
+        console.log(`Global Simulation Tick → Mode: ${mode} | Zones Updated: ${zones.length} | New Alerts: ${totalGeneratedAlerts}`);
 
         return res.status(200).json({
-            message: "Simulation started",
+            message: "Global simulation tick applied",
             mode: mode,
+            success: true,
+            alertsGenerated: totalGeneratedAlerts
         });
     } catch (error) {
         console.error(error);

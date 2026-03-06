@@ -1,35 +1,25 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
-import PublicDashboard from './public-dashboard/PublicDashboard';
-import AuthorityDashboard from './authority-dashboard/AuthorityDashboard';
-import AdminDashboard from './admin-dashboard/AdminDashboard';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-export default function App() {
+// Import Admin Dashboard directly
+import AdminDashboard from './components/admin/AdminDashboard';
+
+// Commenting out missing imports to prevent Vite crashes during UI development
+// import PublicDashboard from './components/public/PublicDashboard';
+// import AuthorityDashboard from './components/authority/AuthorityDashboard';
+
+function App() {
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center text-2xl font-bold flex-col">
-      Tailwind is working
-      <div className="w-full text-base font-normal mt-4">
-        <Router>
-          <div style={{ fontFamily: 'sans-serif', padding: '20px' }}>
-            <nav style={{ marginBottom: '20px', paddingBottom: '10px', borderBottom: '1px solid #ccc' }}>
-              <ul style={{ listStyle: 'none', display: 'flex', gap: '20px', padding: 0, margin: 0, justifyContent: 'center' }}>
-                <li><Link to="/public" style={{ textDecoration: 'none', color: '#007bff' }}>Public</Link></li>
-                <li><Link to="/authority" style={{ textDecoration: 'none', color: '#007bff' }}>Authority</Link></li>
-                <li><Link to="/admin" style={{ textDecoration: 'none', color: '#007bff' }}>Admin</Link></li>
-              </ul>
-            </nav>
+    <BrowserRouter>
+      <Routes>
+        {/* Force Admin Dashboard to load by default on the root path */}
+        <Route path="/" element={<AdminDashboard />} />
 
-            <main className="text-center">
-              <Routes>
-                <Route path="/public" element={<PublicDashboard />} />
-                <Route path="/authority" element={<AuthorityDashboard />} />
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/" element={<Navigate to="/public" replace />} />
-              </Routes>
-            </main>
-          </div>
-        </Router>
-      </div>
-    </div>
+        {/* Catch-all route: Redirects any unknown or error page back to the Admin Dashboard */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
+
+export default App;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { MapPin, Navigation, Search, CheckCircle, AlertCircle } from 'lucide-react';
+import { MapPin, Navigation, Search, CheckCircle, AlertCircle, Plus, Trash2 } from 'lucide-react';
+import { setupVenue } from '../../services/api';
 
 export default function ManageCrowdForm({ onComplete }) {
     const [formData, setFormData] = useState({
@@ -10,9 +11,28 @@ export default function ManageCrowdForm({ onComplete }) {
         lng: ''
     });
 
+    const [zones, setZones] = useState([
+        { name: 'Gate 1 (Main Entry)', capacity: 5000 },
+        { name: 'North Stand', capacity: 10000 }
+    ]);
+
     const [geoStatus, setGeoStatus] = useState('IDLE'); // IDLE, LOADING, SUCCESS, ERROR
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [loadingText, setLoadingText] = useState('');
+
+    const addZone = () => {
+        setZones([...zones, { name: '', capacity: '' }]);
+    };
+
+    const removeZone = (index) => {
+        setZones(zones.filter((_, i) => i !== index));
+    };
+
+    const updateZone = (index, field, value) => {
+        const newZones = [...zones];
+        newZones[index][field] = field === 'capacity' ? parseInt(value) || 0 : value;
+        setZones(newZones);
+    };
 
     // 1. Geolocation API Logic
     const handleDetectLocation = () => {
@@ -39,18 +59,48 @@ export default function ManageCrowdForm({ onComplete }) {
     };
 
     // 2. Form Submission Flow
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsSubmitting(true);
-        setLoadingText('Processing Location Data...');
 
-        // Simulate the Multi-step AI initialization from before
-        setTimeout(() => setLoadingText('Connecting to Satellite Feeds...'), 1000);
-        setTimeout(() => setLoadingText('Calibrating Heat Map Sensors...'), 2000);
-        setTimeout(() => {
-            // Pass the formData back to the parent to switch to the ACTIVE dashboard view
-            onComplete(formData);
-        }, 3000);
+        if (zones.length === 0) {
+            alert("Please add at least one zone.");
+            return;
+        }
+
+        setIsSubmitting(true);
+        setLoadingText('Initializing Setup in Backend...');
+
+        try {
+            const venueData = {
+                name: formData.venueName,
+                location: `${formData.lat}, ${formData.lng}`,
+                zones: zones.map(z => ({
+                    name: z.name,
+                    capacity: z.capacity,
+                    coordinates: {
+                        latitude: parseFloat(formData.lat) || 0,
+                        longitude: parseFloat(formData.lng) || 0
+                    }
+                }))
+            };
+
+            const response = await setupVenue(venueData);
+
+            if (response.success) {
+                setLoadingText('Connecting to Satellite Feeds...');
+                setTimeout(() => setLoadingText('Calibrating Heat Map Sensors...'), 1000);
+                setTimeout(() => {
+                    onComplete(response.venue);
+                }, 2000);
+            } else {
+                alert(response.message || "Failed to setup venue");
+                setIsSubmitting(false);
+            }
+        } catch (error) {
+            console.error("Venue Setup Error:", error);
+            alert("Server Error. Please try again.");
+            setIsSubmitting(false);
+        }
     };
 
     // If we are in the loading sequence, show the Loading State View
@@ -68,17 +118,17 @@ export default function ManageCrowdForm({ onComplete }) {
 
     // Regular Form View
     return (
-        <div className="flex flex-col items-center justify-center h-full min-h-[80vh] bg-[#F5F7FB] p-6 text-gray-800">
+        <div className="flex flex-col items-center justify-center h-full min-h-[80vh] bg-[#F5F7FB] p-6 text-gray-800 overflow-y-auto">
 
-            <div className="mb-8 text-center">
+            <div className="mb-8 text-center mt-12">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-[#002868]/10 rounded-full mb-4 shadow-sm">
                     <MapPin className="w-8 h-8 text-[#002868]" />
                 </div>
                 <h2 className="text-3xl font-black text-[#002868] tracking-tight mb-2">Venue Setup</h2>
-                <p className="text-gray-500 font-medium max-w-md">Define the location and event parameters to initialize the Live Operations Command Center.</p>
+                <p className="text-gray-500 font-medium max-w-md">Define the location and zones to initialize the Live Operations Command Center.</p>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 max-w-lg w-full">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 max-w-2xl w-full mb-12">
                 <form onSubmit={handleSubmit} className="space-y-6">
 
                     {/* Venue Name */}
@@ -128,6 +178,58 @@ export default function ManageCrowdForm({ onComplete }) {
                         </div>
                     </div>
 
+                    {/* Zone Setup Section */}
+                    <div className="pt-6 border-t border-gray-100">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-sm font-bold text-gray-800">Zone Definitions</h3>
+                            <button
+                                type="button"
+                                onClick={addZone}
+                                className="flex items-center gap-1 text-xs font-bold text-[#002868] hover:underline"
+                            >
+                                <Plus size={14} /> Add Zone
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            {zones.map((zone, index) => (
+                                <div key={index} className="flex gap-4 items-end bg-gray-50 p-4 rounded-xl border border-gray-200 relative">
+                                    <div className="flex-1">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Zone Name</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={zone.name}
+                                            onChange={e => updateZone(index, 'name', e.target.value)}
+                                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#002868]"
+                                            placeholder="e.g., North Stand"
+                                        />
+                                    </div>
+                                    <div className="w-32">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Capacity</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            value={zone.capacity}
+                                            onChange={e => updateZone(index, 'capacity', e.target.value)}
+                                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#002868]"
+                                            placeholder="5000"
+                                        />
+                                    </div>
+                                    {zones.length > 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => removeZone(index)}
+                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                     {/* Geographic Coordinates Divider */}
                     <div className="pt-4 pb-2 border-t border-gray-100 flex items-center justify-between">
                         <h3 className="text-sm font-bold text-gray-800">Geographic Bounds</h3>
@@ -158,7 +260,7 @@ export default function ManageCrowdForm({ onComplete }) {
                                     readOnly
                                     required
                                     value={formData.lat}
-                                    placeholder="--.------"
+                                    placeholder="19.0760"
                                     className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 font-mono focus:outline-none"
                                 />
                             </div>
@@ -169,7 +271,7 @@ export default function ManageCrowdForm({ onComplete }) {
                                     readOnly
                                     required
                                     value={formData.lng}
-                                    placeholder="--.------"
+                                    placeholder="72.8777"
                                     className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 font-mono focus:outline-none"
                                 />
                             </div>

@@ -81,3 +81,41 @@ const generateToken = (id) => {
         expiresIn: "30d",
     });
 };
+
+// @desc    Get current user profile
+// @route   GET /api/auth/me
+// @access  Private
+export const getMe = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select("-password").populate("zoneAssigned");
+        if (user) {
+            res.json({ success: true, user });
+        } else {
+            res.status(404).json({ success: false, message: "User not found" });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Update authority node setup
+// @route   PATCH /api/auth/node-setup
+// @access  Private (Authority)
+export const updateNodeSetup = async (req, res) => {
+    try {
+        const { nodeDetails } = req.body;
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            { nodeDetails, isNodeSetup: true },
+            { new: true }
+        ).select("-password").populate("zoneAssigned");
+
+        if (user) {
+            res.json({ success: true, user });
+        } else {
+            res.status(404).json({ success: false, message: "User not found" });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

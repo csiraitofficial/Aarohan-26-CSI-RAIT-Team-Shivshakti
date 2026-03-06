@@ -9,6 +9,9 @@ import routeRoutes from './routes/routeRoutes.js';
 import infoRoutes from './routes/infoRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import venueRoutes from './routes/venueRoutes.js';
+import assignmentRoutes from './routes/assignmentRoutes.js';
+import incidentRoutes from './routes/incidentRoutes.js';
 
 dotenv.config();
 
@@ -31,6 +34,9 @@ app.use('/api/routes', routeRoutes);
 app.use('/api/info', infoRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/venues', venueRoutes);
+app.use('/api/assignments', assignmentRoutes);
+app.use('/api/incidents', incidentRoutes);
 
 // Test route
 app.get('/api/test', (req, res) => {

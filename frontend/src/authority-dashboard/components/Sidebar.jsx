@@ -1,22 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { getMe } from '../../services/api';
 import '../Theme.css';
 
 const Sidebar = () => {
     const navigate = useNavigate();
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const res = await getMe();
+                if (res.success) {
+                    setUser(res.user);
+                }
+            } catch (err) {
+                console.error("Sidebar User Fetch Error:", err);
+            }
+        };
+        fetchUser();
+    }, []);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
         navigate('/');
     };
+
     return (
-        <aside className="w-64 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col justify-between hidden md:flex">
+        <aside className="w-68 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col justify-between hidden md:flex">
             <div>
                 <div className="p-6 border-b border-gray-200 flex items-center justify-center">
-                    {/* Constraining brand logo size appropriately */}
                     <div className="max-w-[200px] w-full flex items-center justify-center space-x-3">
                         <div className="w-8 h-8 rounded-full bg-[var(--color-secondary)] flex items-center justify-center shadow-md">
-                            <span className="text-white font-black text-xs">TF</span>
+                            <span className="text-white font-black text-xs uppercase">TF</span>
                         </div>
                         <span className="text-lg font-black text-[var(--color-primary)] tracking-widest uppercase">Authority</span>
                     </div>
@@ -56,10 +72,17 @@ const Sidebar = () => {
 
             <div className="p-6 border-t border-gray-200">
                 <div className="flex items-center space-x-3">
-                    <img src="https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff" alt="Profile" className="w-10 h-10 rounded-full" />
-                    <div>
-                        <p className="text-sm font-bold text-[var(--color-primary)]">Cmdr. Shepard</p>
-                        <p className="text-xs text-gray-500 font-mono">ID: AUTH-992</p>
+                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200 uppercase font-black text-xs">
+                        {user ? user.name.slice(0, 2) : 'AU'}
+                    </div>
+                    <div className="overflow-hidden">
+                        <p className="text-sm font-bold text-[var(--color-primary)] truncate uppercase">{user ? user.name : 'Unit Pending...'}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                            <div className={`w-1.5 h-1.5 rounded-full ${user?.zoneAssigned ? 'bg-emerald-500' : 'bg-red-500 pulse'}`}></div>
+                            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter truncate">
+                                {user?.zoneAssigned ? user.zoneAssigned.zoneName : 'Awaiting Orders'}
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

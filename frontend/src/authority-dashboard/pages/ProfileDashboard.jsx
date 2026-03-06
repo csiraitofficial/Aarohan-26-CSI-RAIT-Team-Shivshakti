@@ -1,14 +1,46 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Shield, Lock, LogOut, CheckCircle, MapPin, Briefcase } from 'lucide-react';
+import { User, Shield, Lock, LogOut, CheckCircle, MapPin, Briefcase, Activity } from 'lucide-react';
+import { getMe } from '../../services/api';
 
 const ProfileDashboard = () => {
     const navigate = useNavigate();
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const res = await getMe();
+                if (res.success) {
+                    setUser(res.user);
+                }
+            } catch (error) {
+                console.error("Profile Fetch Error:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProfile();
+    }, []);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
         navigate('/');
     };
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[60vh]">
+                <div className="w-10 h-10 border-4 border-slate-200 border-t-secondary rounded-full animate-spin"></div>
+                <p className="mt-4 text-slate-500 font-bold animate-pulse uppercase text-[10px] tracking-widest">Loading Personnel File...</p>
+            </div>
+        );
+    }
+
+    if (!user) return <div className="p-8 text-center text-red-500 font-bold uppercase tracking-widest">Unauthorized Access</div>;
+
+    const assignedZone = user.zoneAssigned ? user.zoneAssigned.zoneName : 'STANDBY (NO ASSIGNMENT)';
 
     return (
         <div className="space-y-6">
@@ -39,16 +71,25 @@ const ProfileDashboard = () => {
 
                         <div className="mt-16 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                             <div className="space-y-1">
-                                <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Officer John Doe</h2>
+                                <h2 className="text-2xl font-bold text-slate-800 tracking-tight uppercase">{user.name}</h2>
                                 <div className="flex items-center gap-2">
                                     <span className="text-secondary font-bold text-xs uppercase tracking-widest">Command Node Operator</span>
                                     <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                    <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">Node ID: AUTH-2026-X94J</span>
+                                    <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">Node ID: {user._id.slice(-8).toUpperCase()}</span>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 bg-emerald-50 text-emerald-600 border border-emerald-100 px-3 py-1.5 rounded-xl">
-                                <CheckCircle size={14} className="animate-pulse" />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Active Duty</span>
+                            <div className={`flex items-center gap-2 border px-3 py-1.5 rounded-xl ${user.zoneAssigned ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+                                {user.zoneAssigned ? (
+                                    <>
+                                        <CheckCircle size={14} className="animate-pulse" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">On Active Duty</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Activity size={14} />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Status: Standby</span>
+                                    </>
+                                )}
                             </div>
                         </div>
 
@@ -59,8 +100,8 @@ const ProfileDashboard = () => {
                                         <Briefcase size={14} />
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Department</p>
-                                        <p className="text-sm font-bold text-slate-700">Crowd Safety & Emergency Response</p>
+                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Dossier Email</p>
+                                        <p className="text-sm font-bold text-slate-700">{user.email}</p>
                                     </div>
                                 </div>
 
@@ -69,14 +110,17 @@ const ProfileDashboard = () => {
                                         <MapPin size={14} />
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Primary Jurisdiction</p>
+                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Current Sector Jurisdiction</p>
                                         <div className="flex flex-wrap gap-1.5 mt-2">
-                                            {['Gate A', 'Gate B', 'Food Court', 'Main Arena'].map(zone => (
-                                                <span key={zone} className="bg-slate-50 text-slate-500 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight hover:bg-white transition-colors cursor-default">
-                                                    {zone}
-                                                </span>
-                                            ))}
+                                            <span className={`px-3 py-1 rounded text-[10px] font-black uppercase tracking-tight transition-colors border ${user.zoneAssigned ? 'bg-secondary text-white border-secondary shadow-lg shadow-secondary/20' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
+                                                {assignedZone}
+                                            </span>
                                         </div>
+                                        {user.zoneAssigned && (
+                                            <p className="text-[9px] text-slate-400 font-bold uppercase mt-3 italic tracking-tighter">
+                                                * You are manually stationed at this sector by Admin Command.
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             </div>

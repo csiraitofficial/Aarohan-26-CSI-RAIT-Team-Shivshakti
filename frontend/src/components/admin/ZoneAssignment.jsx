@@ -1,193 +1,285 @@
-import React, { useState } from 'react';
-import { Shield, ShieldAlert, UserCheck, AlertOctagon, MapPin, Search, Brain, Activity } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Shield, ShieldAlert, ShieldCheck, UserCheck, AlertOctagon, MapPin, Search, Brain, Activity, User, ChevronRight, Info } from 'lucide-react';
+import { getAuthorities, getZones, getMyVenue, createAssignment, getAssignments } from '../../services/api';
 
 export default function ZoneAssignment() {
-    // Sector stabilization data
-    const [sectors, setSectors] = useState([
-        { id: 'ZB-01', name: 'North Bleachers', coordinator: 'Atharv', status: 'STABILIZED' },
-        { id: 'ZB-02', name: 'Player Tunnel', coordinator: null, status: 'UNASSIGNED' },
-        { id: 'ZB-03', name: 'East Wing VIP', coordinator: 'Siddhi', status: 'STABILIZED' },
-        { id: 'ZB-04', name: 'South Gate Entrance', coordinator: 'Patel', status: 'STABILIZED' },
-        { id: 'ZB-05', name: 'Press Box Sector', coordinator: null, status: 'UNASSIGNED' },
-        { id: 'ZB-06', name: 'Perimeter Patrol', coordinator: 'Vinit', status: 'STABILIZED' },
-        { id: 'ZB-07', name: 'VIP Lounge Alpha', coordinator: 'Shreyash', status: 'STABILIZED' },
-        { id: 'ZB-08', name: 'East Terraces', coordinator: null, status: 'UNASSIGNED' },
-        { id: 'ZB-09', name: 'Media Center Delta', coordinator: 'Siddhesh', status: 'STABILIZED' },
-        { id: 'ZB-10', name: 'Lower Concourse B', coordinator: null, status: 'UNASSIGNED' },
-    ]);
-
-    const authorities = ['Atharv', 'Siddhi', 'Patel', 'Vinit', 'Shreyash', 'Siddhesh'];
+    const [loading, setLoading] = useState(true);
+    const [venue, setVenue] = useState(null);
+    const [zones, setZones] = useState([]);
+    const [authorities, setAuthorities] = useState([]);
+    const [assignments, setAssignments] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedAuth, setSelectedAuth] = useState(null);
 
-    const handleAssign = (sectorId, authority) => {
-        setSectors(prev => prev.map(s =>
-            s.id === sectorId
-                ? { ...s, coordinator: authority, status: 'STABILIZED' }
-                : s
-        ));
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const [venueRes, authRes, assignRes] = await Promise.all([
+                    getMyVenue(),
+                    getAuthorities(),
+                    getAssignments()
+                ]);
+
+                if (venueRes.success && venueRes.exists) {
+                    setVenue(venueRes.venue);
+                    setZones(venueRes.zones);
+                }
+
+                if (authRes.success) {
+                    setAuthorities(authRes.data);
+                }
+
+                if (assignRes.success) {
+                    setAssignments(assignRes.data);
+                }
+            } catch (error) {
+                console.error("Data Load Error:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadData();
+    }, []);
+
+    const handleAssign = async (userId, zoneId) => {
+        try {
+            const res = await createAssignment(userId, zoneId);
+            if (res.success) {
+                // Refresh assignments
+                const assignRes = await getAssignments();
+                if (assignRes.success) setAssignments(assignRes.data);
+                setSelectedAuth(null);
+            }
+        } catch (error) {
+            console.error("Assignment Error:", error);
+        }
     };
 
-    const handleUnassign = (sectorId) => {
-        setSectors(prev => prev.map(s =>
-            s.id === sectorId
-                ? { ...s, coordinator: null, status: 'UNASSIGNED' }
-                : s
-        ));
+    const getAssignedZone = (userId) => {
+        const assignment = assignments.find(a => a.userId?._id === userId);
+        return assignment ? assignment.zoneId?.zoneName : 'UNASSIGNED';
     };
+
+    const filteredAuthorities = (authorities || []).filter(a =>
+        a.name?.toLowerCase().includes(searchQuery?.toLowerCase() || '') ||
+        a.email?.toLowerCase().includes(searchQuery?.toLowerCase() || '')
+    );
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[60vh]">
+                <div className="w-12 h-12 border-4 border-slate-200 border-t-[#002868] rounded-full animate-spin"></div>
+                <p className="mt-4 text-slate-500 font-bold animate-pulse">Syncing Tactical Grid...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700">
-            {/* Sector Stabilization Header */}
+            {/* Header */}
             <div className="flex justify-between items-start">
                 <div>
-                    <h2 className="text-3xl font-black text-[#002868] tracking-tighter uppercase italic">Zone Assignment Protocol</h2>
-                    <p className="text-gray-500 font-bold mt-1 tracking-tight">Deployment & Sector Stabilization Interface</p>
+                    <h2 className="text-3xl font-black text-[#002868] tracking-tighter uppercase italic underline decoration-[4px] decoration-sky-400 underline-offset-8">Authority Deployment Control</h2>
+                    <p className="text-gray-500 font-bold mt-3 tracking-tight">Map registered personnel to venue security sectors</p>
                 </div>
-                <div className="flex items-center gap-3 bg-white p-4 rounded-2xl border border-red-100 shadow-sm animate-pulse">
-                    <ShieldAlert className="w-6 h-6 text-red-600" />
+                {venue && (
+                    <div className="bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
+                        <MapPin className="text-sky-500 w-4 h-4" />
+                        <div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase leading-none">Active Venue</p>
+                            <p className="text-sm font-black text-[#002868]">{venue.name}</p>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Main Tactical Interface */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                {/* 1. Personnel List */}
+                <div className="lg:col-span-4 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col h-[650px]">
+                    <div className="p-6 border-b border-slate-50">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center">
+                                <UserCheck className="w-5 h-5 text-sky-600" />
+                            </div>
+                            <div>
+                                <h3 className="font-black text-slate-800 uppercase text-xs tracking-widest">Registered Authorities</h3>
+                                <p className="text-[10px] font-bold text-slate-400">{authorities.length} Units Available</p>
+                            </div>
+                        </div>
+
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search by name or email..."
+                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-xs font-bold focus:ring-2 focus:ring-sky-400 outline-none placeholder:text-slate-300"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+                        {(filteredAuthorities || []).map(auth => {
+                            const zone = getAssignedZone(auth._id);
+                            return (
+                                <button
+                                    key={auth._id}
+                                    onClick={() => setSelectedAuth(auth)}
+                                    className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between group ${selectedAuth?._id === auth._id ? 'bg-[#002868] border-[#002868] text-white shadow-lg' : 'bg-white border-transparent hover:border-slate-100'}`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border-2 ${selectedAuth?._id === auth._id ? 'border-sky-400/50 bg-sky-400/20' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
+                                            <User size={20} />
+                                        </div>
+                                        <div>
+                                            <p className={`text-sm font-black tracking-tight ${selectedAuth?._id === auth._id ? 'text-white' : 'text-slate-700'}`}>{auth.name}</p>
+                                            <p className={`text-[10px] font-bold ${selectedAuth?._id === auth._id ? 'text-sky-200' : 'text-slate-400'}`}>
+                                                {zone !== 'UNASSIGNED' ? (
+                                                    <span className="flex items-center gap-1"><Shield size={10} className="text-emerald-400" /> {zone}</span>
+                                                ) : 'Not Deployed'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <ChevronRight size={16} className={`${selectedAuth?._id === auth._id ? 'text-sky-400' : 'text-slate-200'}`} />
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* 2. Tactical Detail / Assignment Panel */}
+                <div className="lg:col-span-8 space-y-6">
+                    {selectedAuth ? (
+                        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col h-full animate-in slide-in-from-right-4 duration-300">
+                            {/* Profile Header */}
+                            <div className="bg-[#002868] p-8 text-white relative">
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-sky-400/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+                                <div className="relative z-10 flex items-end gap-6">
+                                    <div className="w-24 h-24 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center p-2">
+                                        <div className="w-full h-full bg-white rounded-2xl flex items-center justify-center text-[#002868]">
+                                            <User size={48} />
+                                        </div>
+                                    </div>
+                                    <div className="pb-2">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="px-2 py-0.5 bg-sky-400 text-[#002868] text-[8px] font-black uppercase rounded tracking-widest">Authority Unit</span>
+                                            <span className="text-[10px] font-bold text-sky-200/60 uppercase tracking-widest">ID: {selectedAuth._id.slice(-8).toUpperCase()}</span>
+                                        </div>
+                                        <h3 className="text-3xl font-black tracking-tighter uppercase">{selectedAuth.name}</h3>
+                                        <p className="text-sky-200 font-bold opacity-80">{selectedAuth.email}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* Current Status Card */}
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                        <Activity size={14} className="text-[#002868]" />
+                                        Deployment Status
+                                    </h4>
+                                    <div className={`p-6 rounded-2xl border flex flex-col justify-center gap-4 ${getAssignedZone(selectedAuth._id) === 'UNASSIGNED' ? 'bg-red-50 border-red-100' : 'bg-emerald-50 border-emerald-100'}`}>
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Assignment</p>
+                                            <p className={`text-xl font-black ${getAssignedZone(selectedAuth._id) === 'UNASSIGNED' ? 'text-red-600' : 'text-emerald-700'}`}>
+                                                {getAssignedZone(selectedAuth._id)}
+                                            </p>
+                                        </div>
+                                        {getAssignedZone(selectedAuth._id) === 'UNASSIGNED' ? (
+                                            <div className="flex items-center gap-2 text-red-500 animate-pulse">
+                                                <AlertOctagon size={16} />
+                                                <span className="text-[10px] font-black uppercase">Unit is currently Off-Duty</span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-2 text-emerald-600">
+                                                <Shield size={16} />
+                                                <span className="text-[10px] font-black uppercase">Sector Stabilization Active</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Dynamic Assignment Tool */}
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                        <MapPin size={14} className="text-[#002868]" />
+                                        Reassign To Sector
+                                    </h4>
+                                    <div className="space-y-2">
+                                        {(zones || []).map(zone => {
+                                            const isCurrentlyAssigned = (assignments || []).find(a => a.userId?._id === selectedAuth._id && a.zoneId?._id === zone._id);
+                                            return (
+                                                <button
+                                                    key={zone._id}
+                                                    onClick={() => handleAssign(selectedAuth._id, zone._id)}
+                                                    className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all group ${isCurrentlyAssigned ? 'bg-sky-50 border-sky-200' : 'bg-white border-slate-100 hover:border-sky-200 hover:bg-slate-50'}`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <MapPin size={14} className={isCurrentlyAssigned ? 'text-sky-500' : 'text-slate-300'} />
+                                                        <span className={`text-xs font-black uppercase tracking-tight ${isCurrentlyAssigned ? 'text-[#002868]' : 'text-slate-600'}`}>{zone.zoneName}</span>
+                                                    </div>
+                                                    {isCurrentlyAssigned ? (
+                                                        <span className="text-[8px] font-black text-sky-600 bg-white px-2 py-0.5 rounded border border-sky-100 uppercase">Current</span>
+                                                    ) : (
+                                                        <div className="w-4 h-4 rounded-full border border-slate-200 group-hover:border-sky-400 group-hover:bg-sky-400/10 flex items-center justify-center">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-sky-400 scale-0 group-hover:scale-100 transition-transform"></div>
+                                                        </div>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="h-full flex flex-col items-center justify-center bg-white rounded-3xl border border-slate-100 border-dashed p-12 text-center text-slate-400">
+                            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+                                <ShieldCheck size={40} className="text-slate-200" />
+                            </div>
+                            <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Select a Unit</h3>
+                            <p className="max-w-xs text-sm font-medium mt-2 leading-relaxed italic">
+                                Choose an authority personnel from the sidebar to view their dossier and initiate sector deployment.
+                            </p>
+                            <div className="mt-8 grid grid-cols-2 gap-4 w-full max-w-sm">
+                                <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+                                    <p className="text-[10px] font-black text-slate-300 uppercase mb-1">Ready</p>
+                                    <p className="text-2xl font-black text-slate-400">{(authorities || []).filter(a => getAssignedZone(a._id) === 'UNASSIGNED').length}</p>
+                                </div>
+                                <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+                                    <p className="text-[10px] font-black text-slate-300 uppercase mb-1">Deployed</p>
+                                    <p className="text-2xl font-black text-emerald-400">{(authorities || []).filter(a => getAssignedZone(a._id) !== 'UNASSIGNED').length}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Tactical Briefing Panel */}
+            <div className="bg-[#002868] p-6 rounded-3xl text-white flex items-center justify-between shadow-xl shadow-blue-900/10">
+                <div className="flex items-center gap-6">
+                    <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
+                        <Brain className="w-8 h-8 text-sky-400 animate-pulse" />
+                    </div>
                     <div>
-                        <p className="text-[10px] font-black text-red-400 uppercase tracking-widest leading-none">Gravity Breaches Detected</p>
-                        <p className="text-xl font-black text-red-600 leading-none mt-1">
-                            {sectors.filter(s => !s.coordinator).length} Sectors Vulnerable
+                        <h4 className="text-xs font-black uppercase tracking-widest text-sky-300 mb-1">AI Tactical Briefing</h4>
+                        <p className="text-sm font-bold opacity-80 leading-relaxed uppercase italic">
+                            Deploy units to sectors with <span className="text-sky-400">RISE</span> risk levels to ensure manual crowd stabilization.
                         </p>
                     </div>
                 </div>
-            </div>
-
-            {/* Tactical Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-
-                {/* Deployment Controls */}
-                <div className="lg:col-span-1 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6">
-                    <div className="flex items-center gap-3 text-[#002868]">
-                        <UserCheck className="w-6 h-6" />
-                        <h3 className="font-black uppercase text-sm tracking-widest">Available Authorities</h3>
+                <div className="hidden md:flex items-center gap-4">
+                    <div className="h-10 w-px bg-white/20"></div>
+                    <div className="flex flex-col items-end">
+                        <span className="text-[10px] font-black uppercase opacity-60">Fleet Sync Integrity</span>
+                        <span className="text-emerald-400 text-xs font-black tracking-widest">99.8% READY</span>
                     </div>
-
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search Authority..."
-                            className="w-full pl-9 pr-4 py-2 bg-gray-50 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-[#00AEEF] outline-none"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        {authorities.map(auth => (
-                            <div key={auth} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-[#002868] hover:text-white transition-all cursor-move group">
-                                <span className="font-bold text-sm tracking-tight">{auth}</span>
-                                <Shield className="w-4 h-4 text-indigo-300 group-hover:text-[#00AEEF]" />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Tactical Deployment Table */}
-                <div className="lg:col-span-3 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-                    <div className="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
-                        <h3 className="font-black text-[#002868] uppercase text-sm tracking-widest">Active Stadium Sectors</h3>
-                        <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100">
-                            <Activity className="w-3 h-3" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Sector Integrity High</span>
-                        </div>
-                    </div>
-
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                    <th className="px-6 py-4">Sector ID</th>
-                                    <th className="px-6 py-4">Zone Coordinates</th>
-                                    <th className="px-6 py-4">Authority Status</th>
-                                    <th className="px-6 py-4">Equilibrium</th>
-                                    <th className="px-6 py-4 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50">
-                                {sectors.map((sector) => (
-                                    <tr key={sector.id} className={`group hover:bg-gray-50/80 transition-colors ${!sector.coordinator ? 'bg-red-50/30' : ''}`}>
-                                        <td className="px-6 py-5">
-                                            <span className="text-xs font-black text-[#002868] bg-blue-50 px-2 py-1 rounded border border-blue-100 uppercase">
-                                                {sector.id}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <div className="flex items-center gap-2">
-                                                <MapPin className="w-4 h-4 text-gray-400" />
-                                                <span className="font-black text-gray-800 text-sm tracking-tight italic">{sector.name}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            {sector.coordinator ? (
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-                                                    <span className="text-sm font-bold text-gray-600 tracking-tight">{sector.coordinator} Deployment Active</span>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center gap-2">
-                                                    <AlertOctagon className="w-4 h-4 text-red-600 animate-bounce" />
-                                                    <span className="text-sm font-black text-red-600 tracking-tighter uppercase italic">Gravity Breach</span>
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <span className={`text-[10px] font-black px-3 py-1 rounded-full border uppercase tracking-widest ${sector.coordinator ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-red-100 text-red-800 border-red-200 shadow-sm shadow-red-100'}`}>
-                                                {sector.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-5 text-right">
-                                            {sector.coordinator ? (
-                                                <button
-                                                    onClick={() => handleUnassign(sector.id)}
-                                                    className="text-[10px] font-black text-gray-400 hover:text-red-600 uppercase tracking-widest transition-colors"
-                                                >
-                                                    Recall Unit
-                                                </button>
-                                            ) : (
-                                                <select
-                                                    onChange={(e) => handleAssign(sector.id, e.target.value)}
-                                                    className="text-[10px] font-black bg-[#002868] text-white px-3 py-1.5 rounded-lg border-none focus:ring-2 focus:ring-[#00AEEF] cursor-pointer"
-                                                >
-                                                    <option value="">Deploy Unit</option>
-                                                    {authorities.map(a => <option key={a} value={a}>{a}</option>)}
-                                                </select>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-            </div>
-
-            {/* AI Recommendations Panel */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-2 mb-5">
-                    <Brain className="w-5 h-5 text-purple-500" />
-                    <h3 className="font-black text-[#002868] uppercase text-sm tracking-widest">AI Deployment Recommendations</h3>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {[
-                        { msg: 'Deploy additional officers to Player Tunnel', priority: 'HIGH', color: 'border-red-200 bg-red-50' },
-                        { msg: 'Redirect crowd from Gate 3 to Gate 5', priority: 'MEDIUM', color: 'border-orange-200 bg-orange-50' },
-                        { msg: 'Open emergency exit Gate 7 for dispersal', priority: 'HIGH', color: 'border-red-200 bg-red-50' },
-                        { msg: 'East Terraces require immediate coverage', priority: 'HIGH', color: 'border-red-200 bg-red-50' },
-                        { msg: 'Lower Concourse B approaching capacity', priority: 'MEDIUM', color: 'border-orange-200 bg-orange-50' },
-                        { msg: 'Press Box sector stable — reduce patrol', priority: 'LOW', color: 'border-blue-200 bg-blue-50' },
-                    ].map((rec, i) => (
-                        <div key={i} className={`p-4 rounded-xl border ${rec.color} hover:shadow-sm transition-all cursor-pointer`}>
-                            <p className="text-sm font-bold text-gray-800 leading-snug">{rec.msg}</p>
-                            <span className={`inline-block mt-2 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${rec.priority === 'HIGH' ? 'text-red-600 border-red-300 bg-red-100' : rec.priority === 'MEDIUM' ? 'text-orange-600 border-orange-300 bg-orange-100' : 'text-blue-600 border-blue-300 bg-blue-100'}`}>
-                                {rec.priority} PRIORITY
-                            </span>
-                        </div>
-                    ))}
                 </div>
             </div>
         </div>
     );
 }
-

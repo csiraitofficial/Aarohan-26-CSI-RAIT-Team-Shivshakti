@@ -52,3 +52,24 @@ export const getMyVenue = async (req, res) => {
         res.status(500).json({ success: false, message: "Server Error" });
     }
 };
+
+// Delete Admin's Venue and Zones
+export const deleteVenue = async (req, res) => {
+    try {
+        const venue = await Venue.findOne({ adminId: req.user.id });
+        if (!venue) {
+            return res.status(404).json({ success: false, message: "No venue found" });
+        }
+
+        // Delete all zones associated with the venue
+        await Zone.deleteMany({ venueId: venue._id });
+
+        // Delete the venue
+        await venue.deleteOne();
+
+        res.status(200).json({ success: true, message: "Venue and all associated zones deleted" });
+    } catch (error) {
+        console.error("Delete Venue Error:", error);
+        res.status(500).json({ success: false, message: "Server Error" });
+    }
+};

@@ -46,6 +46,11 @@ const zoneSchema = new mongoose.Schema(
                 type: Number,
             },
         },
+        venueId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Venue",
+            required: true,
+        },
     },
     { timestamps: true }
 );

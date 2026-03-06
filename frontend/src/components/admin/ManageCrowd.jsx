@@ -1,112 +1,150 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, ShieldCheck, MapPin, Activity, Wifi, Users, AlertTriangle, ArrowUpRight, ArrowDownRight, RefreshCcw } from 'lucide-react';
+import { Globe, ShieldCheck, MapPin, Activity, Wifi, Users, AlertTriangle, ArrowUpRight, ArrowDownRight, RefreshCcw, LayoutGrid, Trash2, X } from 'lucide-react';
 import ManageCrowdForm from './ManageCrowdForm';
 import stadiumMap from '../../assets/stadium_map.jpg';
+import { triggerSimulation, getMyVenue, getZones, deleteVenue } from '../../services/api';
 
 export default function ManageCrowd() {
-    const [step, setStep] = useState('FORM'); // FORM, ACTIVE
-
-    // Config captured from form
-    const [venueConfig, setVenueConfig] = useState(null);
+    const [step, setStep] = useState('LOADING'); // LOADING, FORM, ACTIVE
+    const [venue, setVenue] = useState(null);
+    const [zones, setZones] = useState([]);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     // Simulation State
     const [scenario, setScenario] = useState('NORMAL');
-    const [attendance, setAttendance] = useState(274727); // Starting at User's requested number
-    const [flowRate, setFlowRate] = useState(145);
-    const [networkLoad, setNetworkLoad] = useState(88);
-    const [regions, setRegions] = useState({
-        northStand: { name: 'North Stand / Main Gate', top: '15%', left: '50%', w: '400px', h: '300px', blur: 'blur-[40px]', density: 0.95 },
-        westWing: { name: 'West Wing', top: '45%', left: '20%', w: '180px', h: '350px', blur: 'blur-[40px]', density: 0.70 },
-        eastWing: { name: 'East Wing / Open Field', top: '45%', left: '80%', w: '250px', h: '300px', blur: 'blur-[30px]', density: 0.40 }
+    const [isSimulating, setIsSimulating] = useState(false);
+
+    // Live Stats
+    const [stats, setStats] = useState({
+        totalAttendance: 0,
+        flowRate: 145,
+        networkLoad: 88
     });
 
-    // Flow control hook
-    const handleFormComplete = (data) => {
-        setVenueConfig(data);
-        const capacity = parseInt(data.expectedCrowd || 356788);
-        const startingCurrent = Math.floor(capacity * 0.77);
-        // Explicitly start at requested number for the dynamic demo
-        // setAttendance(Math.floor(capacity * 0.77)); 
-
-        // Save to LocalStorage history
-        const history = JSON.parse(localStorage.getItem('crowdHistory') || '[]');
-        const newHistoryItem = {
-            id: Date.now(),
-            name: data.venueName || 'Unknown Venue',
-            type: data.eventType || 'Event',
-            capacity: capacity,
-            current: startingCurrent,
-            location: data.latitude ? `${parseFloat(data.latitude).toFixed(3)}, ${parseFloat(data.longitude).toFixed(3)}` : 'Location N/A',
-            isHistory: true // flag to identify this was added dynamically
-        };
-        localStorage.setItem('crowdHistory', JSON.stringify([newHistoryItem, ...history]));
-
-        setStep('ACTIVE');
-    };
-
-    // Simulation Tick for ACTIVE state
     useEffect(() => {
-        let timer;
-        if (step === 'ACTIVE') {
-            const maxCap = venueConfig ? parseInt(venueConfig.expectedCrowd) : 356788;
-            timer = setInterval(() => {
-                if (scenario === 'NORMAL' && attendance < maxCap) {
-                    setAttendance(prev => prev + Math.floor(Math.random() * 12) + 2);
-                } else if (scenario === 'EMERGENCY' && attendance > 0) {
-                    setAttendance(prev => Math.max(0, prev - Math.floor(Math.random() * 300) + 50));
+        const checkVenue = async () => {
+            try {
+                const response = await getMyVenue();
+                if (response.success && response.exists) {
+                    setVenue(response.venue);
+                    setZones(response.zones);
+                    setStep('ACTIVE');
+                } else {
+                    setStep('FORM');
                 }
-            }, 2000);
-        }
-        return () => clearInterval(timer);
-    }, [step, scenario, attendance, venueConfig]);
+            } catch (error) {
+                console.error("Failed to check venue:", error);
+                setStep('FORM');
+            }
+        };
+        checkVenue();
+    }, []);
 
-    const handleScenario = (type) => {
+    // Periodic Data Fetch for Stats
+    useEffect(() => {
+        let interval;
+        if (step === 'ACTIVE') {
+            const fetchData = async () => {
+                try {
+                    const zonesRes = await getZones();
+                    if (Array.isArray(zonesRes)) {
+                        const myZones = zonesRes.filter(z => z.venueId === venue?._id);
+                        if (myZones.length > 0) {
+                            setZones(myZones);
+                            const total = myZones.reduce((acc, z) => acc + (z.currentOccupancy || 0), 0);
+                            setStats(prev => ({ ...prev, totalAttendance: total }));
+                        }
+                    }
+                } catch (err) {
+                    console.error("Stats Fetch Error:", err);
+                }
+            };
+            fetchData();
+            interval = setInterval(fetchData, 3000);
+        }
+        return () => clearInterval(interval);
+    }, [step, venue]);
+
+    const handleFormComplete = (venueData) => {
+        setVenue(venueData);
+        window.location.reload(); // Refresh to ensure backend sync
+    };
+
+    const handleScenario = async (type) => {
         setScenario(type);
-        if (type === 'NORMAL') {
-            setRegions({
-                northStand: { ...regions.northStand, density: 0.95 },
-                westWing: { ...regions.westWing, density: 0.70 },
-                eastWing: { ...regions.eastWing, density: 0.40 },
-            });
-            setFlowRate(145);
-            setNetworkLoad(88);
-        } else if (type === 'HALF_TIME') {
-            setRegions({
-                northStand: { ...regions.northStand, density: 0.40 },
-                westWing: { ...regions.westWing, density: 0.98 },
-                eastWing: { ...regions.eastWing, density: 0.60 },
-            });
-            setFlowRate(18);
-            setNetworkLoad(96);
-        } else if (type === 'EMERGENCY') {
-            setRegions({
-                northStand: { ...regions.northStand, density: 0.99 },
-                westWing: { ...regions.westWing, density: 0.85 },
-                eastWing: { ...regions.eastWing, density: 0.90 },
-            });
-            setFlowRate(0);
-            setNetworkLoad(100);
+        setIsSimulating(true);
+        try {
+            await triggerSimulation(type);
+            // Simulation is handled by backend, we just poll for results
+            if (type === 'EMERGENCY') {
+                setStats(prev => ({ ...prev, flowRate: 0, networkLoad: 100 }));
+            } else if (type === 'SURGE') {
+                setStats(prev => ({ ...prev, flowRate: 25, networkLoad: 95 }));
+            } else {
+                setStats(prev => ({ ...prev, flowRate: 145, networkLoad: 85 }));
+            }
+        } catch (err) {
+            console.error("Simulation Trigger Error:", err);
+        } finally {
+            setIsSimulating(false);
         }
     };
 
-    const getGradientStyling = (density) => {
-        if (density >= 0.90) return 'from-red-600/90 via-red-500/60 to-transparent animate-pulse';
-        if (density >= 0.70) return 'from-orange-500/80 via-orange-400/50 to-transparent animate-pulse delay-75';
-        if (density >= 0.50) return 'from-yellow-400/80 via-yellow-400/50 to-transparent animate-pulse delay-75';
-        return 'from-green-500/70 via-green-400/40 to-transparent';
+    const handleDeleteVenue = async () => {
+        setIsSimulating(true); // Show loading spinner on confirm button
+        try {
+            const response = await deleteVenue();
+            if (response.success) {
+                setStep('FORM');
+                setVenue(null);
+                setZones([]);
+                setShowDeleteModal(false);
+            }
+        } catch (error) {
+            console.error("Delete Venue Error:", error);
+            alert("Failed to delete venue.");
+        } finally {
+            setIsSimulating(false);
+        }
     };
 
-    // --- VIEW 1: SETUP FORM ---
+    const getRiskColor = (risk) => {
+        switch (risk) {
+            case 'CRITICAL': return 'bg-red-600';
+            case 'HIGH': return 'bg-orange-500';
+            case 'MEDIUM': return 'bg-yellow-400';
+            default: return 'bg-emerald-500';
+        }
+    };
+
+    const getGradientStyling = (risk) => {
+        switch (risk) {
+            case 'CRITICAL': return 'from-red-600/90 via-red-500/60 to-transparent animate-pulse';
+            case 'HIGH': return 'from-orange-500/80 via-orange-400/50 to-transparent animate-pulse';
+            case 'MEDIUM': return 'from-yellow-400/80 via-yellow-400/50 to-transparent';
+            default: return 'from-green-500/70 via-green-400/40 to-transparent';
+        }
+    };
+
+    if (step === 'LOADING') {
+        return (
+            <div className="flex flex-col items-center justify-center h-[60vh]">
+                <div className="w-12 h-12 border-4 border-slate-200 border-t-[#002868] rounded-full animate-spin"></div>
+                <p className="mt-4 text-slate-500 font-bold animate-pulse">Initializing Ops Center...</p>
+            </div>
+        );
+    }
+
     if (step === 'FORM') {
         return <ManageCrowdForm onComplete={handleFormComplete} />;
     }
 
-    const currentCapacity = venueConfig ? parseInt(venueConfig.expectedCrowd) : 356788;
+    const totalCapacity = zones.reduce((acc, z) => acc + (z.capacity || 0), 0);
+    const usagePercent = totalCapacity > 0 ? ((stats.totalAttendance / totalCapacity) * 100).toFixed(1) : 0;
 
-    // --- VIEW 3: ACTIVE (Operations Center) ---
     return (
         <div className="space-y-6">
-            {/* Operations Header */}
+            {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Operations Command Center</h2>
@@ -117,165 +155,219 @@ export default function ManageCrowd() {
                         </span>
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                             <MapPin size={12} />
-                            {venueConfig ? venueConfig.venueName : 'Main Arena'}
+                            {venue ? venue.name : 'Unknown Venue'}
                         </span>
+                        <button
+                            onClick={() => setShowDeleteModal(true)}
+                            className="p-1.5 hover:bg-red-50 text-red-400 hover:text-red-500 rounded-lg transition-all flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest border border-transparent hover:border-red-100"
+                            title="Reset Venue Setup"
+                        >
+                            <Trash2 size={12} />
+                            Reset Venue
+                        </button>
                     </div>
                 </div>
 
-                {/* Organizer Controls */}
                 <div className="bg-white p-1.5 rounded-xl border border-slate-100 flex items-center gap-1.5 shadow-sm">
                     <button
                         onClick={() => handleScenario('NORMAL')}
-                        className={`px-4 py-2 text-[10px] font-bold rounded-lg uppercase tracking-wider transition-all ${scenario === 'NORMAL' ? 'bg-primary text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}
+                        disabled={isSimulating}
+                        className={`px-4 py-2 text-[10px] font-bold rounded-lg uppercase tracking-wider transition-all ${scenario === 'NORMAL' ? 'bg-[#002868] text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}
                     >
                         Normal
                     </button>
                     <button
-                        onClick={() => handleScenario('HALF_TIME')}
-                        className={`px-4 py-2 text-[10px] font-bold rounded-lg uppercase tracking-wider transition-all ${scenario === 'HALF_TIME' ? 'bg-accent text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}
+                        onClick={() => handleScenario('SURGE')}
+                        disabled={isSimulating}
+                        className={`px-4 py-2 text-[10px] font-bold rounded-lg uppercase tracking-wider transition-all ${scenario === 'SURGE' ? 'bg-orange-500 text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}
                     >
-                        Peak
+                        Surge
                     </button>
                     <button
                         onClick={() => handleScenario('EMERGENCY')}
-                        className={`px-4 py-2 text-[10px] font-bold rounded-lg uppercase tracking-wider transition-all flex items-center gap-2 ${scenario === 'EMERGENCY' ? 'bg-critical text-white shadow-md' : 'text-critical hover:bg-critical/5'}`}
+                        disabled={isSimulating}
+                        className={`px-4 py-2 text-[10px] font-bold rounded-lg uppercase tracking-wider transition-all flex items-center gap-2 ${scenario === 'EMERGENCY' ? 'bg-red-600 text-white shadow-md' : 'text-red-600 hover:bg-red-50'}`}
                     >
                         <AlertTriangle size={12} /> Emergency
                     </button>
                 </div>
             </div>
 
-            {/* Live Counter Grid */}
+            {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Total Attendance */}
-                <div className="card-base group hover:border-secondary transition-all">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                     <div className="flex justify-between items-start mb-4">
                         <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                            <Users size={16} /> Total Attendance
+                            <Users size={16} /> Attendance
                         </h3>
-                        <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-widest animate-pulse border border-emerald-100">Real-time</span>
+                        <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-widest">Active</span>
                     </div>
-                    <div>
-                        <p className="text-4xl font-bold text-slate-800 tracking-tight">{attendance.toLocaleString()}</p>
-                        <div className="flex justify-between items-end mt-2">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Target: {currentCapacity.toLocaleString()}</span>
-                            <span className="text-xs font-bold text-secondary">
-                                {((attendance / currentCapacity) * 100).toFixed(1)}% Usage
-                            </span>
-                        </div>
-                        {/* Progress Bar */}
-                        <div className="w-full bg-slate-100 h-2 rounded-full mt-3 overflow-hidden">
-                            <div
-                                className={`h-full transition-all duration-1000 shadow-inner ${attendance / currentCapacity > 0.9 ? 'bg-critical' : 'bg-secondary'}`}
-                                style={{ width: `${(attendance / currentCapacity) * 100}%` }}
-                            ></div>
-                        </div>
+                    <p className="text-4xl font-bold text-slate-800 tracking-tight">{stats.totalAttendance.toLocaleString()}</p>
+                    <div className="mt-3 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div
+                            className={`h-full transition-all duration-1000 ${usagePercent > 90 ? 'bg-red-600' : usagePercent > 75 ? 'bg-orange-500' : 'bg-[#002868]'}`}
+                            style={{ width: `${usagePercent}%` }}
+                        ></div>
                     </div>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-2 tracking-widest">{usagePercent}% of {totalCapacity.toLocaleString()}</p>
                 </div>
 
-                {/* Flow Rate */}
-                <div className="card-base group hover:border-secondary transition-all">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                     <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-4">
-                        <Activity size={16} /> Movement Flow Rate
+                        <Activity size={16} /> Entry Rate
                     </h3>
-                    <div className="flex-1 flex flex-col justify-center">
-                        <div className="flex items-baseline gap-2">
-                            <p className="text-5xl font-bold text-slate-800 tracking-tighter">{flowRate}</p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">PPM</p>
-                        </div>
-                        <div className={`mt-5 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg w-max border ${flowRate > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
-                            {flowRate > 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                            {flowRate > 0 ? 'Inflow Active' : 'Emergency Egress'}
-                        </div>
+                    <div className="flex items-baseline gap-2">
+                        <p className="text-5xl font-bold text-slate-800 tracking-tighter">{stats.flowRate}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">PPM</p>
+                    </div>
+                    <div className={`mt-4 inline-flex items-center gap-2 text-[8px] font-bold uppercase tracking-widest px-2 py-1 rounded border ${stats.flowRate > 30 ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                        {stats.flowRate > 30 ? <RefreshCcw size={10} className="animate-spin" /> : <ShieldCheck size={10} />}
+                        {stats.flowRate > 30 ? 'Heavy Inflow' : 'Optimal Flow'}
                     </div>
                 </div>
 
-                {/* Mobile Density */}
-                <div className="card-base group hover:border-secondary transition-all">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                     <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-4">
                         <Wifi size={16} /> Device Saturation
                     </h3>
-                    <div className="flex-1 flex flex-col justify-center">
-                        <div className="flex items-baseline gap-2">
-                            <p className="text-5xl font-bold text-slate-800 tracking-tighter">{networkLoad}%</p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Load</p>
+                    <div className="flex items-baseline gap-2">
+                        <p className="text-5xl font-bold text-slate-800 tracking-tighter">{stats.networkLoad}%</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Load</p>
+                    </div>
+                    <div className="mt-4 flex gap-1.5">
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <div key={i} className={`h-1.5 flex-1 rounded-full ${i <= (stats.networkLoad / 20) ? (stats.networkLoad > 90 ? 'bg-red-500' : 'bg-[#002868]') : 'bg-slate-100'}`}></div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Map and Zones */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 relative bg-slate-900 rounded-2xl shadow-lg border border-slate-200 overflow-hidden min-h-[500px]">
+                    <img
+                        src={stadiumMap}
+                        alt="Venue"
+                        className="w-full h-full object-cover opacity-60 mix-blend-luminosity"
+                    />
+
+                    {/* Zones Overlay */}
+                    <div className="absolute inset-0">
+                        {zones.map((zone, idx) => {
+                            // Pseudo-random placement based on index for demo
+                            const top = 20 + (idx * 25) % 60;
+                            const left = 20 + (idx * 30) % 60;
+                            const risk = zone.riskLevel || 'LOW';
+
+                            return (
+                                <div key={zone._id} className="absolute transform -translate-x-1/2 -translate-y-1/2" style={{ top: `${top}%`, left: `${left}%` }}>
+                                    <div className={`w-32 h-32 rounded-full bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] ${getGradientStyling(risk)} blur-2xl opacity-80`}></div>
+                                    <div className="relative z-10 flex flex-col items-center mt-[-16px]">
+                                        <div className={`px-3 py-1 rounded-full text-[8px] font-black text-white uppercase tracking-widest ${getRiskColor(risk)} shadow-lg`}>
+                                            {zone.zoneName}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-lg text-[10px] font-bold text-[#002868] shadow-lg border border-white/20">
+                        <span className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                            LIVE NETWORK MESH
+                        </span>
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                        <div className="flex items-center gap-2 mb-4">
+                            <LayoutGrid size={16} className="text-[#002868]" />
+                            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-widest">Sector Status</h3>
+                        </div>
+                        <div className="space-y-3">
+                            {zones.map(zone => {
+                                const density = Math.round((zone.currentOccupancy / zone.capacity) * 100);
+                                return (
+                                    <div key={zone._id} className="p-3 rounded-xl border border-slate-50 bg-slate-50/50">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-[10px] font-bold text-slate-600 truncate max-w-[120px]">{zone.zoneName}</span>
+                                            <span className={`text-[8px] font-black px-2 py-0.5 rounded text-white ${getRiskColor(zone.riskLevel)}`}>
+                                                {zone.riskLevel}
+                                            </span>
+                                        </div>
+                                        <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full ${getRiskColor(zone.riskLevel)}`}
+                                                style={{ width: `${density}%` }}
+                                            ></div>
+                                        </div>
+                                        <div className="flex justify-between mt-1 text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
+                                            <span>{zone.currentOccupancy} / {zone.capacity}</span>
+                                            <span>{density}%</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {/* --- CUSTOM DELETE MODAL --- */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white max-w-md w-full rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform animate-in zoom-in-95 duration-200">
+                        {/* Modal Header */}
+                        <div className="px-6 py-4 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                                <AlertTriangle size={14} className="text-red-500" />
+                                Confirm Data Reset
+                            </h3>
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                className="p-1 hover:bg-slate-100 rounded-full transition-colors"
+                            >
+                                <X size={16} className="text-slate-400" />
+                            </button>
                         </div>
 
-                        {scenario !== 'NORMAL' && (
-                            <div className="mt-4 p-3 bg-red-50 rounded-xl border border-red-100 flex items-start gap-3 shadow-sm animate-in slide-in-from-right-2">
-                                <AlertTriangle size={14} className="text-red-500 shrink-0 mt-0.5" />
-                                <p className="text-[10px] font-bold text-red-700 uppercase tracking-wide leading-relaxed">
-                                    {scenario === 'HALF_TIME' ? 'Surge detected in transit zones.' : 'Network spectrum fully utilized.'}
+                        {/* Modal Content */}
+                        <div className="p-6">
+                            <div className="flex flex-col items-center text-center mb-6">
+                                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+                                    <Trash2 size={32} className="text-red-500" />
+                                </div>
+                                <h4 className="text-lg font-bold text-slate-800 mb-2">Are you absolutely sure?</h4>
+                                <p className="text-sm text-slate-500 leading-relaxed font-medium">
+                                    This will permanently delete the current venue configuration, all {zones.length} zones, and local history. You will need to start the setup process from scratch.
                                 </p>
                             </div>
-                        )}
-                    </div>
-                </div>
-            </div>
 
-            {/* Realistic Integrated Map */}
-            <div className="relative w-full bg-[#001432] rounded-xl shadow-lg border border-gray-200 overflow-hidden group">
-
-                {/* High-Res Satellite Image Base */}
-                <img
-                    src={stadiumMap}
-                    alt="Stadium Map"
-                    className="w-full h-auto block transition-transform duration-[20000ms] ease-linear group-hover:scale-[1.03]"
-                />
-                {/* Map Header Overlay */}
-                <div className="absolute top-4 left-4 z-20 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-lg shadow-lg border border-gray-100 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-[#002868]" />
-                    <span className="font-bold text-[#002868] text-sm tracking-wide">Live Heatmap Overlay</span>
-                </div>
-
-                {/* Realistic Heat Map "Clouds" Overlay */}
-                <div className="absolute inset-0 z-10 pointer-events-none mix-blend-hard-light">
-                    {Object.keys(regions).map(key => {
-                        const z = regions[key];
-                        return (
-                            <div
-                                key={key}
-                                className={`absolute rounded-full transform -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] ${getGradientStyling(z.density)} ${z.blur} transition-colors duration-1000`}
-                                style={{ top: z.top, left: z.left, width: z.w, height: z.h }}
-                            ></div>
-                        )
-                    })}
-                </div>
-
-                {/* Area Labels Layer */}
-                <div className="absolute inset-0 z-20 pointer-events-none">
-                    {Object.keys(regions).map(key => {
-                        const z = regions[key];
-                        return (
-                            <div
-                                key={key + '-label'}
-                                className="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
-                                style={{ top: z.top, left: z.left }}
-                            >
-                                <span className="bg-white/90 backdrop-blur-md text-[#002868] text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded shadow-sm border border-gray-100">
-                                    {z.name}
-                                </span>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl uppercase tracking-widest transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleDeleteVenue}
+                                    disabled={isSimulating}
+                                    className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-lg shadow-red-200 uppercase tracking-widest transition-all inline-flex items-center justify-center gap-2"
+                                >
+                                    {isSimulating ? (
+                                        <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    ) : (
+                                        <Trash2 size={12} />
+                                    )}
+                                    Confirm Reset
+                                </button>
                             </div>
-                        )
-                    })}
-                </div>
-
-                {/* AI Status Overlay */}
-                <div className="absolute bottom-5 right-5 z-30 bg-white/95 backdrop-blur-md px-5 py-3.5 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 flex items-center gap-5">
-                    <div className="flex flex-col">
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1 text-right">AI Analytics Engine</p>
-                        <p className="text-sm font-black text-[#002868]">Satellite Array 04</p>
-                    </div>
-                    <div className="w-px h-10 bg-gray-200"></div>
-                    <div className="flex flex-col items-end justify-center min-w-[70px]">
-                        <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-[pulse_1.5s_ease-in-out_infinite] shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
-                            <span className="text-xs font-black text-green-600 uppercase tracking-widest">SYNCING</span>
                         </div>
                     </div>
                 </div>
-            </div>
-
+            )}
         </div>
     );
 }

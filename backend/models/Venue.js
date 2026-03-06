@@ -18,7 +18,7 @@ const venueSchema = new mongoose.Schema(
         },
         simulationMode: {
             type: String,
-            enum: ["NORMAL", "EMERGENCY"],
+            enum: ["NORMAL", "SURGE", "EMERGENCY"],
             default: "NORMAL",
         },
     },

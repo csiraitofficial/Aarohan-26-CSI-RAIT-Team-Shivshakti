@@ -1,5 +1,6 @@
 import Zone from "../models/Zone.js";
 import Alert from "../models/Alert.js";
+import Venue from "../models/Venue.js";
 import { calculateDensityAndRisk } from "../services/densityService.js";
 
 // Helper function to get random integer between min and max (inclusive)
@@ -18,8 +19,15 @@ export const startSimulation = async (req, res) => {
 
         const zones = await Zone.find();
         if (!zones || zones.length === 0) {
-            return res.status(404).json({ message: "No zones found to simulate" });
+            return res.status(200).json({
+                success: true,
+                message: "No zones found to simulate. Setup venue first.",
+                alertsGenerated: 0
+            });
         }
+
+        // Update Venue Simulation Mode (Global for now)
+        await Venue.updateMany({}, { simulationMode: mode });
 
         let totalGeneratedAlerts = 0;
 
@@ -33,13 +41,13 @@ export const startSimulation = async (req, res) => {
                     entry = getRandomInt(5, 15);
                     exit = getRandomInt(3, 10);
                     break;
-                case "RISING":
-                    entry = getRandomInt(20, 50);
-                    exit = getRandomInt(5, 15);
+                case "SURGE":
+                    entry = getRandomInt(30, 80);
+                    exit = getRandomInt(10, 25);
                     break;
-                case "CRITICAL":
-                    entry = getRandomInt(60, 120);
-                    exit = getRandomInt(5, 10);
+                case "EMERGENCY":
+                    entry = getRandomInt(100, 250);
+                    exit = getRandomInt(5, 15);
                     break;
                 default:
                     return res.status(400).json({ message: `Unknown mode: ${mode}` });
@@ -48,8 +56,12 @@ export const startSimulation = async (req, res) => {
             zone.entryCount = entry; // We store the RATE for this tick, not total sum, so the frontend can read "Entry Rate"
             zone.exitCount = exit;
 
-            // Update Occupancy
-            zone.currentOccupancy = Math.max(0, Math.min(zone.capacity, zone.currentOccupancy + entry - exit));
+            // Update Occupancy (Allow exceeding capacity for Surge/Emergency states)
+            zone.currentOccupancy = Math.max(0, zone.currentOccupancy + entry - exit);
+            // Optionally cap at 150% of capacity to prevent infinite growth
+            if (zone.currentOccupancy > zone.capacity * 1.5) {
+                zone.currentOccupancy = Math.round(zone.capacity * 1.5);
+            }
 
             // Density Math
             const density = zone.capacity > 0 ? (zone.currentOccupancy / zone.capacity) : 0;

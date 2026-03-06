@@ -25,6 +25,14 @@ const userSchema = new mongoose.Schema(
       ref: "Zone",
       required: false,
     },
+    isNodeSetup: {
+      type: Boolean,
+      default: false,
+    },
+    nodeDetails: {
+      type: Object,
+      default: {},
+    },
   },
   { timestamps: true }
 );

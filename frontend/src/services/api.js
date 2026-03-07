@@ -101,12 +101,6 @@ export async function getAssignments() {
     return request('/assignments');
 }
 
-export async function respondToAssignment(status) {
-    return request('/assignments/respond', {
-        method: "POST",
-        body: JSON.stringify({ status })
-    });
-}
 export async function getMe() {
     return request('/auth/me');
 }
@@ -139,6 +133,13 @@ export async function resolveAuthorityIncident(incidentId) {
 
 export async function resolveAllAlerts() {
     return request('/authority/resolve-all', { method: 'POST' });
+}
+
+export async function respondToAssignment(status) {
+    return request('/assignments/respond', {
+        method: 'POST',
+        body: JSON.stringify({ status })
+    });
 }
 // Navigation & AI Paths
 export async function getVenueConfig() {

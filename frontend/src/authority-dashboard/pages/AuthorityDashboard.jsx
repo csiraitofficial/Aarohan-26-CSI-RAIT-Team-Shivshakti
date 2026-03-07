@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Activity, Shield, AlertCircle, Users, MapPin, ArrowRight, Radio, Briefcase, AlertTriangle } from 'lucide-react';
+import { Activity, Shield, AlertCircle, Users, MapPin, ArrowRight, Radio, Briefcase, AlertTriangle, CheckCircle } from 'lucide-react';
 import TelemetryFooter from '../components/TelemetryFooter';
-import { getMe, getAuthorityZones, getAuthorityAlerts } from '../../services/api';
+import { getMe, getAuthorityZones, getAuthorityAlerts, respondToAssignment } from '../../services/api';
 
 const AuthorityDashboard = () => {
     const [user, setUser] = useState(null);
     const [zones, setZones] = useState([]);
     const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [responding, setResponding] = useState(false);
 
     // Audio & Toast State
     const [activeToast, setActiveToast] = useState(null);
@@ -74,6 +75,24 @@ const AuthorityDashboard = () => {
         return () => clearInterval(interval);
     }, []);
 
+    const handleAssignmentResponse = async (status) => {
+        setResponding(true);
+        try {
+            const res = await respondToAssignment(status);
+            if (res.success) {
+                setUser(res.user);
+                setActiveToast(`Assignment ${status.toUpperCase()} successfully.`);
+                setTimeout(() => setActiveToast(null), 4000);
+            }
+        } catch (error) {
+            console.error("Error responding to assignment:", error);
+            setActiveToast("Failed to respond to assignment.");
+            setTimeout(() => setActiveToast(null), 4000);
+        } finally {
+            setResponding(false);
+        }
+    };
+
 
     if (loading) {
         return (
@@ -117,6 +136,48 @@ const AuthorityDashboard = () => {
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-200">Urgent Dispatch</p>
                         <p className="text-lg font-black tracking-tight italic">{activeToast}</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Pending Assignment Banner */}
+            {user?.assignmentStatus === 'Pending' && user?.zoneAssigned && (
+                <div className="bg-amber-500 text-white p-6 rounded-3xl shadow-lg border-2 border-amber-600 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-amber-600/30 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+                    <div className="relative z-10 flex items-center gap-4">
+                        <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                            <AlertCircle size={32} className="text-white animate-pulse" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-black uppercase tracking-tight">Deployment Request</h3>
+                            <p className="text-amber-100 font-medium text-sm mt-1 mb-1">
+                                You have been requested to deploy to <strong className="text-white">{user.zoneAssigned.zoneName}</strong>.
+                            </p>
+                            <p className="text-xs font-bold text-amber-200 uppercase tracking-widest">
+                                Status: PENDING RESPONSE
+                            </p>
+                        </div>
+                    </div>
+                    <div className="relative z-10 flex gap-3 w-full md:w-auto">
+                        <button
+                            onClick={() => handleAssignmentResponse('Rejected')}
+                            disabled={responding}
+                            className="flex-1 md:flex-none px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm uppercase tracking-widest transition-colors shadow-lg shadow-red-600/20 disabled:opacity-50"
+                        >
+                            Reject
+                        </button>
+                        <button
+                            onClick={() => handleAssignmentResponse('Accepted')}
+                            disabled={responding}
+                            className="flex-1 md:flex-none px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-sm uppercase tracking-widest transition-colors shadow-lg shadow-emerald-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {responding ? (
+                                <div className="w-4 h-4 rounded-full border-2 border-white/50 border-t-white animate-spin"></div>
+                            ) : (
+                                <CheckCircle size={18} />
+                            )}
+                            Accept Deployment
+                        </button>
                     </div>
                 </div>
             )}

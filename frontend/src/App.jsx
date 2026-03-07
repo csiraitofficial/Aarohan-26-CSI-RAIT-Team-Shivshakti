@@ -15,12 +15,9 @@ import SignupAuthority from './SignupAuthority.jsx';
 // Admin Dashboard & Pages
 import AdminDashboard from './components/admin/AdminDashboard';
 import ManageCrowd from './components/admin/ManageCrowd';
-import ZoneConfig from './components/admin/ZoneConfig';
 import ZoneAssignment from './components/admin/ZoneAssignment';
 import UserManagement from './components/admin/UserManagement';
-import SystemSettings from './components/admin/SystemSettings';
 import IncidentManagement from './components/admin/IncidentManagement';
-import AIPredictions from './components/admin/AIPredictions';
 import VenueSetup from './components/admin/VenueSetup';
 
 // Authority Dashboard & Pages
@@ -64,13 +61,9 @@ function App() {
             >
               <Route index element={<AdminDashboard />} />
               <Route path="map" element={<ManageCrowd />} />
-              <Route path="predictions" element={<AIPredictions />} />
               <Route path="incidents" element={<IncidentManagement />} />
-              <Route path="zones" element={<ZoneConfig />} />
               <Route path="deployment" element={<ZoneAssignment />} />
-              <Route path="analytics" element={<AdminDashboard />} /> {/* Placeholder to avoid errors */}
               <Route path="users" element={<UserManagement />} />
-              <Route path="settings" element={<SystemSettings />} />
               <Route path="setup" element={<VenueSetup />} />
             </Route>
 

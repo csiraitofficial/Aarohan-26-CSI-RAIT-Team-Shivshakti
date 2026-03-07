@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Activity, Shield, AlertCircle, Users, MapPin, ArrowRight, Info, CheckCircle, Radio, Briefcase, Plus, Send } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Activity, Shield, AlertCircle, Users, MapPin, ArrowRight, Info, CheckCircle, Radio, Briefcase, AlertTriangle } from 'lucide-react';
 import TelemetryFooter from '../components/TelemetryFooter';
-import { getMe, setupNode, getAuthorityZones, getAuthorityAlerts } from '../../services/api';
+import { getMe, getAuthorityZones, getAuthorityAlerts, respondToAssignment } from '../../services/api';
 
 const AuthorityDashboard = () => {
     const [user, setUser] = useState(null);
@@ -9,10 +9,14 @@ const AuthorityDashboard = () => {
     const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Form State
-    const [gate, setGate] = useState('');
-    const [equipment, setEquipment] = useState([]);
-    const [responsibility, setResponsibility] = useState('');
+    // Audio & Toast State
+    const [activeToast, setActiveToast] = useState(null);
+    const alertingZonesRef = useRef(new Set());
+    const audioRef = useRef(null);
+
+    useEffect(() => {
+        audioRef.current = new Audio('/sounds/buzzer.mp3');
+    }, []);
 
     const fetchAllData = async () => {
         try {
@@ -23,8 +27,40 @@ const AuthorityDashboard = () => {
             ]);
 
             if (meRes.success) setUser(meRes.user);
-            setZones(zonesRes.data || []);
+            const incomingZones = zonesRes.data || [];
+            setZones(incomingZones);
             setAlerts(alertsRes.data || []);
+
+            // --- Audio Alert Logic ---
+            let playedSound = false;
+            let newToastMsg = null;
+            const currentAlerts = new Set(alertingZonesRef.current);
+
+            incomingZones.forEach(z => {
+                const density = z.capacity > 0 ? (z.currentOccupancy / z.capacity) : 0;
+                if (density > 1.0) {
+                    if (!currentAlerts.has(z._id)) {
+                        playedSound = true;
+                        newToastMsg = `🚨 EMERGENCY: HIGH CROWD AT ${z.zoneName.toUpperCase()}`;
+                        currentAlerts.add(z._id);
+                    }
+                } else {
+                    currentAlerts.delete(z._id);
+                }
+            });
+
+            alertingZonesRef.current = currentAlerts;
+
+            if (playedSound) {
+                if (audioRef.current) {
+                    audioRef.current.currentTime = 0;
+                    audioRef.current.play().catch(e => console.log('Autoplay blocked', e));
+                }
+                if (newToastMsg) {
+                    setActiveToast(newToastMsg);
+                    setTimeout(() => setActiveToast(null), 8000);
+                }
+            }
         } catch (error) {
             console.error("Error fetching authority telemetry:", error);
         } finally {
@@ -38,26 +74,15 @@ const AuthorityDashboard = () => {
         return () => clearInterval(interval);
     }, []);
 
-    const handleSetupSubmit = async (e) => {
-        e.preventDefault();
+    const handleApproval = async (status) => {
         try {
-            const res = await setupNode({
-                gate,
-                equipment,
-                responsibility
-            });
+            const res = await respondToAssignment(status);
             if (res.success) {
                 setUser(res.user);
             }
         } catch (error) {
-            console.error("Setup Error:", error);
+            console.error("Approval Error:", error);
         }
-    };
-
-    const toggleEquipment = (item) => {
-        setEquipment(prev =>
-            prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
-        );
     };
 
     if (loading) {
@@ -69,81 +94,69 @@ const AuthorityDashboard = () => {
         );
     }
 
-    // 1. Initial Node Setup Form
-    if (user && !user.isNodeSetup) {
+    if (!user) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 bg-red-50 rounded-3xl border border-red-100 italic">
+                <AlertCircle className="text-red-500 mb-4" size={40} />
+                <h2 className="text-xl font-black text-red-600 uppercase tracking-tighter">Authentication Required</h2>
+                <p className="text-xs font-bold text-red-400 uppercase tracking-widest mt-2">Please login to access tacical telemetry.</p>
+            </div>
+        );
+    }
+
+    // 1. Awaiting Deployment State
+    if (!user.assignmentStatus || user.assignmentStatus === 'None' || user.assignmentStatus === 'Rejected') {
+        return (
+            <div className="flex flex-col items-center justify-center h-[60vh] text-center animate-in fade-in duration-700">
+                <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6 shadow-iner border border-slate-100">
+                    <Shield className="text-slate-300" size={48} />
+                </div>
+                <h2 className="text-3xl font-black text-slate-800 tracking-tighter uppercase italic">Awaiting Deployment</h2>
+                <p className="text-slate-500 font-bold mt-2 max-w-sm leading-relaxed">
+                    You currently have no active sector assignments. Please stand by for dispatch from the Command Center.
+                </p>
+            </div>
+        );
+    }
+
+    // 2. Pending Approval State
+    if (user.assignmentStatus === 'Pending') {
+        const assignedZoneName = user.zoneAssigned ? user.zoneAssigned.zoneName : 'Unknown Sector';
         return (
             <div className="max-w-2xl mx-auto py-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <div className="text-center mb-10">
-                    <div className="w-20 h-20 bg-secondary/10 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-secondary/20 shadow-xl shadow-secondary/10">
-                        <Shield size={40} className="text-secondary animate-pulse" />
+                    <div className="w-20 h-20 bg-amber-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-amber-500/20 shadow-xl shadow-amber-500/10">
+                        <AlertCircle size={40} className="text-amber-500 animate-pulse" />
                     </div>
-                    <h1 className="text-3xl font-black text-slate-800 tracking-tight uppercase italic underline decoration-sky-400 decoration-[4px] underline-offset-8">Authority Node Setup</h1>
-                    <p className="mt-4 text-slate-400 font-bold uppercase text-[10px] tracking-widest">Initialize your command post credentials for sector stabilization.</p>
+                    <h1 className="text-3xl font-black text-slate-800 tracking-tight uppercase italic underline decoration-amber-400 decoration-[4px] underline-offset-8">Deployment Request</h1>
+                    <p className="mt-4 text-slate-400 font-bold uppercase text-[10px] tracking-widest">Command Center has assigned you a new sector.</p>
                 </div>
 
-                <div className="card-base p-8 border-t-4 border-t-secondary">
-                    <div className="mb-8 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4">
-                        <MapPin className="text-secondary" />
+                <div className="bg-white p-8 rounded-3xl border-t-8 border-t-amber-500 shadow-xl">
+                    <div className="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col items-center text-center gap-4">
+                        <MapPin size={32} className="text-amber-500" />
                         <div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Assigned Jurisdiction</p>
-                            <p className="text-lg font-black text-slate-800 uppercase italic">
-                                {user.zoneAssigned ? user.zoneAssigned.zoneName : 'Awaiting Sector Assignment'}
+                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest leading-none mb-2">Requested Jurisdiction</p>
+                            <p className="text-3xl font-black text-slate-800 uppercase italic">
+                                {assignedZoneName}
                             </p>
                         </div>
                     </div>
 
-                    <form onSubmit={handleSetupSubmit} className="space-y-8">
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Primary Post / Gate</label>
-                            <input
-                                type="text"
-                                required
-                                value={gate}
-                                onChange={(e) => setGate(e.target.value)}
-                                placeholder="e.g., Gate 4, Main Entrance North"
-                                className="w-full bg-slate-50 border-none rounded-xl px-5 py-4 font-bold text-slate-700 focus:ring-2 focus:ring-secondary/50 outline-none placeholder:text-slate-300 italic"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Equipment Inventory</label>
-                            <div className="grid grid-cols-2 gap-3">
-                                {['Radio Link', 'Med Kit', 'Crowd Barrier', 'Bio-Scanner', 'Body Cam', 'Emergency Flare'].map(item => (
-                                    <button
-                                        key={item}
-                                        type="button"
-                                        onClick={() => toggleEquipment(item)}
-                                        className={`flex items-center gap-3 p-4 rounded-xl border transition-all text-xs font-bold uppercase tracking-tight ${equipment.includes(item) ? 'bg-secondary text-white border-secondary shadow-lg shadow-secondary/20' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}
-                                    >
-                                        <Plus size={14} className={equipment.includes(item) ? 'rotate-45' : ''} />
-                                        {item}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Operational Responsibility</label>
-                            <select
-                                required
-                                value={responsibility}
-                                onChange={(e) => setResponsibility(e.target.value)}
-                                className="w-full bg-slate-50 border-none rounded-xl px-5 py-4 font-bold text-slate-700 focus:ring-2 focus:ring-secondary/50 outline-none italic"
-                            >
-                                <option value="" disabled>Select Core Directive...</option>
-                                <option value="Crowd Management">Crowd Management & Flow</option>
-                                <option value="Access Control">Access Control & Search</option>
-                                <option value="Emergency Response">Emergency Response Lead</option>
-                                <option value="Perimeter Security">Perimeter & Gate Security</option>
-                                <option value="VIP Escort">VIP Escort & Zone Clearance</option>
-                            </select>
-                        </div>
-
-                        <button type="submit" className="w-full bg-primary hover:bg-slate-900 text-white font-black py-5 rounded-2xl shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-3 uppercase tracking-[0.3em] italic">
-                            <Send size={20} />
-                            Deploy Unit
+                    <div className="grid grid-cols-2 gap-4">
+                        <button
+                            onClick={() => handleApproval('Rejected')}
+                            className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-black py-4 rounded-xl transition-all uppercase tracking-widest text-sm"
+                        >
+                            Reject
                         </button>
-                    </form>
+                        <button
+                            onClick={() => handleApproval('Accepted')}
+                            className="bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all uppercase tracking-[0.2em] italic flex items-center justify-center gap-2"
+                        >
+                            <CheckCircle size={18} /> Accept Duty
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -172,6 +185,20 @@ const AuthorityDashboard = () => {
 
     return (
         <div className="space-y-6">
+            {/* Notification Toast */}
+            {activeToast && (
+                <div className="fixed top-6 right-6 z-[100] animate-in slide-in-from-right-8 fade-in duration-500 bg-red-600 border-2 border-red-400 text-white px-6 py-4 rounded-2xl shadow-[0_0_40px_rgba(220,38,38,0.5)] flex items-center gap-4">
+                    <div className="relative">
+                        <AlertTriangle className="animate-bounce" size={28} />
+                        <span className="absolute inset-0 rounded-full animate-ping border-2 border-white/50"></span>
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-200">Urgent Dispatch</p>
+                        <p className="text-lg font-black tracking-tight italic">{activeToast}</p>
+                    </div>
+                </div>
+            )}
+
             {/* Sector Highlight Header */}
             {assignedZoneData && (
                 <div className="bg-[#002868] p-8 rounded-3xl text-white relative overflow-hidden shadow-2xl shadow-blue-900/20 mb-8 border border-white/10 group">
@@ -258,7 +285,7 @@ const AuthorityDashboard = () => {
                     </div>
                     <div className="flex items-end justify-between">
                         <div>
-                            <p className="text-3xl font-bold tracking-tight uppercase italic">{user?.isNodeSetup ? 'Active Duty' : 'Setup Required'}</p>
+                            <p className="text-3xl font-bold tracking-tight uppercase italic">{user?.assignmentStatus === 'Accepted' ? 'Active Duty' : 'Standby'}</p>
                             <p className="text-[10px] font-bold text-sky-300 uppercase tracking-[0.2em] mt-1">Operational ID: {user?._id?.slice(-8).toUpperCase() || 'UNKNOWN'}</p>
                         </div>
                         <CheckCircle size={40} className="text-emerald-400" />

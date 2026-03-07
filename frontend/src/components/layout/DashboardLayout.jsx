@@ -19,7 +19,6 @@ const DashboardLayout = () => {
             '/admin/zones': { title: 'Zone Configuration', desc: 'Manage sector definitions and capacity limits' },
             '/admin/deployment': { title: 'Authority Deployment', desc: 'Allocate resources and official personnel' },
             '/admin/analytics': { title: 'Deep Analytics', desc: 'Historical data analysis and reporting' },
-            '/admin/settings': { title: 'System Settings', desc: 'Configure platform parameters and AI sensitivity' },
 
             '/authority': { title: 'Assigned Zones', desc: 'Your designated sectors and live telemetry' },
             '/authority/alerts': { title: 'Live Alerts', desc: 'Critical incidents requiring immediate action' },

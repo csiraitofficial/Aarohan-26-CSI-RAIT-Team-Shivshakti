@@ -33,6 +33,11 @@ const userSchema = new mongoose.Schema(
       type: Object,
       default: {},
     },
+    assignmentStatus: {
+      type: String,
+      enum: ["None", "Pending", "Accepted", "Rejected"],
+      default: "None",
+    },
   },
   { timestamps: true }
 );

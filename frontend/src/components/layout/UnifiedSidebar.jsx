@@ -3,11 +3,9 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
     Map,
-    BrainCircuit,
     AlertTriangle,
     Settings,
     Users,
-    PieChart,
     ShieldAlert,
     MapPin,
     Navigation,
@@ -35,13 +33,9 @@ const UnifiedSidebar = ({ isOpen, toggleSidebar }) => {
         admin: [
             { name: 'Command Center', icon: <LayoutDashboard size={20} />, path: '/admin' },
             { name: 'Live Crowd Map', icon: <Map size={20} />, path: '/admin/map' },
-            { name: 'AI Predictions', icon: <BrainCircuit size={20} />, path: '/admin/predictions' },
             { name: 'Incidents', icon: <AlertTriangle size={20} />, path: '/admin/incidents' },
-            { name: 'Zone Configuration', icon: <Settings size={20} />, path: '/admin/zones' },
             { name: 'Authority Deployment', icon: <ShieldAlert size={20} />, path: '/admin/deployment' },
-            { name: 'Analytics', icon: <PieChart size={20} />, path: '/admin/analytics' },
             { name: 'User Management', icon: <Users size={20} />, path: '/admin/users' },
-            { name: 'Settings', icon: <Settings size={20} />, path: '/admin/settings' },
         ],
         authority: [
             { name: 'Assigned Zones', icon: <MapPin size={20} />, path: '/authority' },
@@ -112,8 +106,8 @@ const UnifiedSidebar = ({ isOpen, toggleSidebar }) => {
                             {({ isActive }) => (
                                 <>
                                     <span className={`shrink-0 transition-transform group-hover:scale-110 ${isActive
-                                            ? (isPublic ? 'text-secondary' : 'text-white')
-                                            : (isPublic ? 'text-slate-400 group-hover:text-secondary' : 'text-white/50 group-hover:text-white')
+                                        ? (isPublic ? 'text-secondary' : 'text-white')
+                                        : (isPublic ? 'text-slate-400 group-hover:text-secondary' : 'text-white/50 group-hover:text-white')
                                         }`}>{item.icon}</span>
                                     <span className="font-medium text-sm whitespace-nowrap">{item.name}</span>
                                 </>

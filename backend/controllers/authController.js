@@ -64,6 +64,8 @@ export const login = async (req, res) => {
                     name: user.name,
                     email: user.email,
                     role: user.role,
+                    zoneAssigned: user.zoneAssigned,
+                    assignmentStatus: user.assignmentStatus
                 },
                 token: generateToken(user._id),
             });
@@ -115,6 +117,18 @@ export const updateNodeSetup = async (req, res) => {
         } else {
             res.status(404).json({ success: false, message: "User not found" });
         }
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Get all users (Admin only)
+// @route   GET /api/auth/users
+// @access  Private (Admin)
+export const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find({}).select("-password").sort({ createdAt: -1 });
+        res.json({ success: true, users });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

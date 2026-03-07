@@ -94,8 +94,19 @@ export async function getAssignments() {
     return request('/assignments');
 }
 
+export async function respondToAssignment(status) {
+    return request('/assignments/respond', {
+        method: "POST",
+        body: JSON.stringify({ status })
+    });
+}
+
 export async function getMe() {
     return request('/auth/me');
+}
+
+export async function getAllUsers() {
+    return request('/auth/users');
 }
 
 export async function setupNode(nodeDetails) {

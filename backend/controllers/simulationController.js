@@ -2,6 +2,8 @@ import Zone from "../models/Zone.js";
 import Alert from "../models/Alert.js";
 import Venue from "../models/Venue.js";
 import { calculateDensityAndRisk } from "../services/densityService.js";
+import Incident from "../models/Incident.js";
+
 
 // Helper function to get random integer between min and max (inclusive)
 const getRandomInt = (min, max) => {
@@ -56,6 +58,15 @@ export const startSimulation = async (req, res) => {
             zone.entryCount = entry; // We store the RATE for this tick, not total sum, so the frontend can read "Entry Rate"
             zone.exitCount = exit;
 
+            // Randomly force an Overcrowding scenario for demonstration purposes (50% chance per tick to test buzzer sooner)
+            // OR if SURGE/EMERGENCY is clicked, instantly overcrowd to guarantee the buzzer fires.
+            const forceOvercrowding = Math.random() < 0.50 || mode === "SURGE" || mode === "EMERGENCY";
+            if (forceOvercrowding) {
+                console.log(`[SIM] Forcing artificial surge in Zone: ${zone.zoneName}`);
+                entry = zone.capacity * 2; // Massive influx to guarantee > 100% capacity
+                exit = 0;              // Gate blocked
+            }
+
             // Update Occupancy (Allow exceeding capacity for Surge/Emergency states)
             zone.currentOccupancy = Math.max(0, zone.currentOccupancy + entry - exit);
             // Optionally cap at 150% of capacity to prevent infinite growth
@@ -103,7 +114,7 @@ export const startSimulation = async (req, res) => {
                     await Alert.create({
                         zoneId: zone._id,
                         alertType: "Surge",
-                        severity: "WARNING",
+                        severity: "HIGH",
                         message: `Rapid crowd growth detected (+${netFlow} net flow)`,
                         status: "ACTIVE"
                     });
@@ -111,7 +122,54 @@ export const startSimulation = async (req, res) => {
                 }
             }
 
-            await zone.save();
+            // 3. Auto-log Incidents for extreme overcrowding (> 100% capacity)
+            if (density > 1.0) {
+                const existingIncident = await Incident.findOne({
+                    zoneId: zone._id,
+                    type: "Overcrowding",
+                    status: { $in: ["Active", "Dispatched", "Monitoring"] }
+                });
+
+                if (!existingIncident) {
+                    await Incident.create({
+                        zoneId: zone._id,
+                        type: "Overcrowding",
+                        severity: density > 1.1 ? "CRITICAL" : "HIGH",
+                        status: "Active",
+                        description: `Auto-logged: Sector density reached ${(density * 100).toFixed(0)}% of max capacity.`,
+                    });
+                } else if (density > 1.1 && existingIncident.severity !== "CRITICAL") {
+                    // Escalate Severity if conditions worsen
+                    existingIncident.severity = "CRITICAL";
+                    existingIncident.description = `Escalated: Sector density reached ${(density * 100).toFixed(0)}%.`;
+                    await existingIncident.save();
+                }
+            } else if (density <= 1.0) {
+                // Auto-resolve overcrowding incidents if crowd clears
+                const activeIncidents = await Incident.find({
+                    zoneId: zone._id,
+                    type: "Overcrowding",
+                    status: { $in: ["Active", "Dispatched", "Monitoring"] }
+                });
+
+                for (let inc of activeIncidents) {
+                    inc.status = "Resolved";
+                    inc.description = `${inc.description} | Auto-resolved: Crowd density dropped back to safe levels (${(density * 100).toFixed(0)}%).`;
+                    await inc.save();
+                }
+            }
+
+            await Zone.updateOne(
+                { _id: zone._id },
+                {
+                    $set: {
+                        entryCount: zone.entryCount,
+                        exitCount: zone.exitCount,
+                        currentOccupancy: zone.currentOccupancy,
+                        riskLevel: zone.riskLevel
+                    }
+                }
+            );
         }
 
         console.log(`Global Simulation Tick → Mode: ${mode} | Zones Updated: ${zones.length} | New Alerts: ${totalGeneratedAlerts}`);
@@ -124,6 +182,6 @@ export const startSimulation = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ message: "Server Error" });
+        return res.status(500).json({ message: "Server Error", error: error.stack });
     }
 };

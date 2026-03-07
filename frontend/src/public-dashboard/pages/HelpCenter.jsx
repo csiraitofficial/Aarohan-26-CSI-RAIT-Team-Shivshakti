@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import TicketModal from '../components/TicketModal';
+import API_BASE_URL from '../../config';
 
 export default function HelpCenter() {
     const [faqs, setFaqs] = useState([]);
@@ -8,7 +9,7 @@ export default function HelpCenter() {
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
 
     useEffect(() => {
-        fetch('http://localhost:5000/api/info/faqs')
+        fetch(`${API_BASE_URL}/api/info/faqs`)
             .then(res => res.json())
             .then(data => {
                 setFaqs(data);

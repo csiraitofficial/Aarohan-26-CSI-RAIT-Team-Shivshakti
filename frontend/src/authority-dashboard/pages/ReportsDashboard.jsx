@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, MapPin, AlertCircle, Download, Clock, BarChart3 } from 'lucide-react';
+import API_BASE_URL from '../../config';
 
 const ReportsDashboard = () => {
     const [zones, setZones] = useState([]);
@@ -14,8 +15,8 @@ const ReportsDashboard = () => {
             };
 
             const [zonesRes, alertsRes] = await Promise.all([
-                fetch('http://localhost:5000/api/authority/zones', { headers }),
-                fetch('http://localhost:5000/api/authority/alerts', { headers })
+                fetch(`${API_BASE_URL}/api/authority/zones`, { headers }),
+                fetch(`${API_BASE_URL}/api/authority/alerts`, { headers })
             ]);
 
             if (zonesRes.ok) {

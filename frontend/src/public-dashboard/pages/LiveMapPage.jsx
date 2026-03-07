@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useDashboardContext } from '../context/DashboardContext';
+import API_BASE_URL from '../../config';
 
 export default function LiveMapPage() {
     const { zones, getUserLocationZone } = useDashboardContext();
@@ -15,7 +16,7 @@ export default function LiveMapPage() {
         setRouteInfo(null);
 
         try {
-            const res = await fetch('http://localhost:5000/api/routes/calculate-safe-path', {
+            const res = await fetch(`${API_BASE_URL}/api/routes/calculate-safe-path`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

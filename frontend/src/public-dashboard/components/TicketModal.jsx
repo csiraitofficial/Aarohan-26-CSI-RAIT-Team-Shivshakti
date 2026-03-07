@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import API_BASE_URL from '../../config';
 
 export default function TicketModal({ isOpen, onClose }) {
     const [formData, setFormData] = useState({
@@ -27,7 +28,7 @@ export default function TicketModal({ isOpen, onClose }) {
         setIsSubmitting(true);
 
         try {
-            const response = await fetch('http://localhost:5000/api/tickets', {
+            const response = await fetch(`${API_BASE_URL}/api/tickets`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
@@ -79,7 +80,7 @@ export default function TicketModal({ isOpen, onClose }) {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Category</label>
-                                <select 
+                                <select
                                     name="category"
                                     value={formData.category}
                                     onChange={handleChange}
@@ -95,7 +96,7 @@ export default function TicketModal({ isOpen, onClose }) {
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Urgency</label>
-                                <select 
+                                <select
                                     name="urgency"
                                     value={formData.urgency}
                                     onChange={handleChange}
@@ -111,7 +112,7 @@ export default function TicketModal({ isOpen, onClose }) {
 
                         <div>
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Subject</label>
-                            <input 
+                            <input
                                 type="text"
                                 name="subject"
                                 placeholder="Brief summary of the issue"
@@ -124,7 +125,7 @@ export default function TicketModal({ isOpen, onClose }) {
 
                         <div>
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Description</label>
-                            <textarea 
+                            <textarea
                                 name="description"
                                 rows="3"
                                 placeholder="Please describe the issue and the affected zone..."
@@ -137,7 +138,7 @@ export default function TicketModal({ isOpen, onClose }) {
 
                         <div>
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Attachment (Optional)</label>
-                            <input 
+                            <input
                                 type="file"
                                 onChange={handleFileChange}
                                 className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#00AEEF]/10 file:text-[#002868] hover:file:bg-[#00AEEF]/20 cursor-pointer"
@@ -145,14 +146,14 @@ export default function TicketModal({ isOpen, onClose }) {
                         </div>
 
                         <div className="flex justify-end gap-3 mt-8">
-                            <button 
+                            <button
                                 type="button"
                                 onClick={onClose}
                                 className="px-6 py-2.5 text-sm font-bold text-gray-500 hover:text-gray-900 border border-transparent transition-colors"
                             >
                                 Cancel
                             </button>
-                            <button 
+                            <button
                                 type="submit"
                                 disabled={isSubmitting}
                                 className="px-8 py-2.5 bg-[#002868] text-white text-sm font-bold rounded-xl shadow-lg hover:bg-[#001f52] transition-colors flex items-center gap-2 disabled:opacity-50"

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ZoneCard from '../components/ZoneCard';
 import SimulatedLiveMap from '../components/SimulatedLiveMap';
+import API_BASE_URL from '../../config';
 
 const ZonesDashboard = () => {
     const [zones, setZones] = useState([]);
@@ -15,8 +16,8 @@ const ZonesDashboard = () => {
             };
 
             const [zonesRes, alertsRes] = await Promise.all([
-                fetch('http://localhost:5000/api/authority/zones', { headers }),
-                fetch('http://localhost:5000/api/authority/alerts', { headers })
+                fetch(`${API_BASE_URL}/api/authority/zones`, { headers }),
+                fetch(`${API_BASE_URL}/api/authority/alerts`, { headers })
             ]);
 
             if (zonesRes.ok) {

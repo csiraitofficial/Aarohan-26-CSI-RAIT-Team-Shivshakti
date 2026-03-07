@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import API_BASE_URL from '../../config';
 
 export default function About() {
     const [status, setStatus] = useState({ version: 'v1.0.0-beta', status: 'operational' });
 
     useEffect(() => {
-        fetch('http://localhost:5000/api/info/system-status')
+        fetch(`${API_BASE_URL}/api/info/system-status`)
             .then(res => res.json())
             .then(data => setStatus(data))
             .catch(err => console.error("Error fetching system status:", err));

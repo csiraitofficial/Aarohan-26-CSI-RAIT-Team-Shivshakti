@@ -1,4 +1,6 @@
-const API_URL = "http://localhost:5000/api";
+import API_BASE_URL from '../config';
+
+const API_URL = `${API_BASE_URL}/api`;
 
 // Private helper for authorized requests
 async function request(endpoint, options = {}) {

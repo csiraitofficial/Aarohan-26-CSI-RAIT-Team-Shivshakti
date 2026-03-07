@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import h337 from 'heatmap.js';
+import h337 from '../lib/heatmap.js';
 
 export default function StadiumHeatmap({ heatData, scenario = 'NORMAL' }) {
     const containerRef = useRef(null);

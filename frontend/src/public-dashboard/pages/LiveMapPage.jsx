@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useDashboardContext } from '../context/DashboardContext';
 
 export default function LiveMapPage() {
-    const { zones, getUserLocationZone, getRiskColorInfo } = useDashboardContext();
+    const { zones, getUserLocationZone } = useDashboardContext();
     const userLocationZone = getUserLocationZone();
     const [selectedZone, setSelectedZone] = useState(null);
     const [showRouteModal, setShowRouteModal] = useState(false);

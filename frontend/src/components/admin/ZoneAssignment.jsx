@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, ShieldAlert, ShieldCheck, UserCheck, AlertOctagon, MapPin, Search, Brain, Activity, User, ChevronRight, Info } from 'lucide-react';
-import { getAuthorities, getZones, getMyVenue, createAssignment, getAssignments } from '../../services/api';
+import { getAuthorities, getMyVenue, createAssignment, getAssignments } from '../../services/api';
 
 export default function ZoneAssignment() {
     const [loading, setLoading] = useState(true);
@@ -12,6 +12,8 @@ export default function ZoneAssignment() {
     const [selectedAuth, setSelectedAuth] = useState(null);
 
     useEffect(() => {
+        let isMounted = true;
+
         const loadData = async () => {
             try {
                 const [venueRes, authRes, assignRes] = await Promise.all([
@@ -19,6 +21,8 @@ export default function ZoneAssignment() {
                     getAuthorities(),
                     getAssignments()
                 ]);
+
+                if (!isMounted) return;
 
                 if (venueRes.success && venueRes.exists) {
                     setVenue(venueRes.venue);
@@ -35,19 +39,52 @@ export default function ZoneAssignment() {
             } catch (error) {
                 console.error("Data Load Error:", error);
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
         };
+
+        const pollData = async () => {
+            try {
+                const [authRes, assignRes] = await Promise.all([
+                    getAuthorities(),
+                    getAssignments()
+                ]);
+                if (!isMounted) return;
+
+                if (authRes.success) setAuthorities(authRes.data);
+                if (assignRes.success) setAssignments(assignRes.data);
+
+                // Keep selected auth synced if they accepted
+                setSelectedAuth(prev => {
+                    if (!prev) return null;
+                    const updated = authRes.data?.find(a => a._id === prev._id);
+                    return updated || prev;
+                });
+            } catch (error) {
+                console.error("Polling Error:", error);
+            }
+        };
+
         loadData();
+        const intervalId = setInterval(pollData, 3000);
+
+        return () => {
+            isMounted = false;
+            clearInterval(intervalId);
+        };
     }, []);
 
     const handleAssign = async (userId, zoneId) => {
         try {
             const res = await createAssignment(userId, zoneId);
             if (res.success) {
-                // Refresh assignments
-                const assignRes = await getAssignments();
+                // Refresh both assignments and authorities (to get latest assignmentStatus)
+                const [assignRes, authRes] = await Promise.all([
+                    getAssignments(),
+                    getAuthorities()
+                ]);
                 if (assignRes.success) setAssignments(assignRes.data);
+                if (authRes.success) setAuthorities(authRes.data);
                 setSelectedAuth(null);
             }
         } catch (error) {
@@ -56,7 +93,7 @@ export default function ZoneAssignment() {
     };
 
     const getAssignedZone = (userId) => {
-        const assignment = assignments.find(a => a.userId?._id === userId);
+        const assignment = assignments.find(a => a.userId?._id === userId && a.status === 'Active');
         return assignment ? assignment.zoneId?.zoneName : 'UNASSIGNED';
     };
 
@@ -136,9 +173,14 @@ export default function ZoneAssignment() {
                                         </div>
                                         <div>
                                             <p className={`text-sm font-black tracking-tight ${selectedAuth?._id === auth._id ? 'text-white' : 'text-slate-700'}`}>{auth.name}</p>
-                                            <p className={`text-[10px] font-bold ${selectedAuth?._id === auth._id ? 'text-sky-200' : 'text-slate-400'}`}>
+                                            <p className={`text-[10px] font-bold mt-1 ${selectedAuth?._id === auth._id ? 'text-sky-200' : 'text-slate-400'}`}>
                                                 {zone !== 'UNASSIGNED' ? (
-                                                    <span className="flex items-center gap-1"><Shield size={10} className="text-emerald-400" /> {zone}</span>
+                                                    <span className="flex flex-wrap items-center gap-2">
+                                                        <span className="flex items-center gap-1"><Shield size={10} className="text-emerald-400" /> {zone}</span>
+                                                        <span className={`px-1.5 py-0.5 rounded text-[8px] uppercase tracking-widest font-black border ${auth.assignmentStatus === 'Accepted' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'}`}>
+                                                            Req: {auth.assignmentStatus || 'Pending'}
+                                                        </span>
+                                                    </span>
                                                 ) : 'Not Deployed'}
                                             </p>
                                         </div>
@@ -210,7 +252,7 @@ export default function ZoneAssignment() {
                                     </h4>
                                     <div className="space-y-2">
                                         {(zones || []).map(zone => {
-                                            const isCurrentlyAssigned = (assignments || []).find(a => a.userId?._id === selectedAuth._id && a.zoneId?._id === zone._id);
+                                            const isCurrentlyAssigned = (assignments || []).find(a => a.userId?._id === selectedAuth._id && a.zoneId?._id === zone._id && (a.status === 'Active' || a.status === 'Pending'));
                                             return (
                                                 <button
                                                     key={zone._id}

@@ -25,7 +25,9 @@ const venueConfigSchema = new mongoose.Schema(
                     type: String,
                     enum: ["green", "yellow", "red"],
                     default: "green"
-                }
+                },
+                entryCount: { type: Number, default: 0 },
+                exitCount: { type: Number, default: 0 }
             }
         ],
         paths: [

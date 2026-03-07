@@ -33,7 +33,7 @@ export default function VenueConfigPanel() {
                 setMessage({ type: 'success', text: 'Venue configuration saved successfully!' });
                 setTimeout(() => setMessage({ type: '', text: '' }), 3000);
             }
-        } catch (err) {
+        } catch {
             setMessage({ type: 'error', text: 'Failed to save configuration.' });
         } finally {
             setSaving(false);

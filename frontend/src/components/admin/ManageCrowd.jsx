@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Globe, ShieldCheck, MapPin, Activity, Wifi, Users, AlertTriangle, ArrowUpRight, ArrowDownRight, RefreshCcw, LayoutGrid, Trash2, X } from 'lucide-react';
 import ManageCrowdForm from './ManageCrowdForm';
-import StadiumHeatmap from './StadiumHeatmap';
+import StadiumHeatmap from '../StadiumHeatmap';
 import { triggerSimulation, getMyVenue, getZones, deleteVenue } from '../../services/api';
 
 export default function ManageCrowd() {
@@ -28,6 +28,9 @@ export default function ManageCrowd() {
                 if (response.success && response.exists) {
                     setVenue(response.venue);
                     setZones(response.zones);
+                    if (response.venue.simulationMode) {
+                        setScenario(response.venue.simulationMode);
+                    }
                     setStep('ACTIVE');
                 } else {
                     setStep('FORM');
@@ -283,45 +286,24 @@ export default function ManageCrowd() {
                             <h3 className="text-xs font-bold text-slate-800 uppercase tracking-widest">Sector Status</h3>
                         </div>
                         <div className="space-y-3">
-                            {zones.map((zone, idx) => {
-                                // For demo purposes, we override the stats based on the selected scenario
-                                // We'll apply different base densities for the first two zones (Gate 1 and North Stand)
-                                // to match the user's specific scenario expectation.
-                                let density = Math.round((zone.currentOccupancy / zone.capacity) * 100);
-                                let riskLabel = zone.riskLevel;
-
-                                // Override based on scenario
-                                if (scenario === 'EMERGENCY') {
-                                    density = 150 - (idx * 5); // Example: 150%, 145%, etc.
-                                    riskLabel = 'CRITICAL';
-                                } else if (scenario === 'SURGE') {
-                                    density = 85 - (idx * 5);  // Example: 85%, 80%, etc.
-                                    riskLabel = density > 80 ? 'HIGH' : 'ELEVATED';
-                                } else { // NORMAL
-                                    density = 45 - (idx * 5);  // Example: 45%, 40%, etc.
-                                    riskLabel = density < 50 ? 'OPTIMAL' : 'LOW';
-                                }
-
-                                const displayOccupancy = Math.round((density / 100) * zone.capacity);
-                                // Ensure the bar doesn't go completely out of bounds visually
-                                const barWidth = Math.min(density, 100);
-
+                            {zones.map(zone => {
+                                const density = Math.round((zone.currentOccupancy / zone.capacity) * 100);
                                 return (
                                     <div key={zone._id} className="p-3 rounded-xl border border-slate-50 bg-slate-50/50">
                                         <div className="flex justify-between items-center mb-2">
                                             <span className="text-[10px] font-bold text-slate-600 truncate max-w-[120px]">{zone.zoneName}</span>
-                                            <span className={`text-[8px] font-black px-2 py-0.5 rounded text-white ${getRiskColor(riskLabel)}`}>
-                                                {riskLabel}
+                                            <span className={`text-[8px] font-black px-2 py-0.5 rounded text-white ${getRiskColor(zone.riskLevel)}`}>
+                                                {zone.riskLevel}
                                             </span>
                                         </div>
                                         <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
                                             <div
-                                                className={`h-full ${getRiskColor(riskLabel).replace('text-', 'bg-').split(' ')[0]}`} // Fallback for background color if getRiskColor returns text color
-                                                style={{ width: `${barWidth}%`, backgroundColor: riskLabel === 'CRITICAL' ? '#ef4444' : riskLabel === 'HIGH' || riskLabel === 'ELEVATED' ? '#f97316' : '#22c55e' }}
+                                                className={`h-full ${getRiskColor(zone.riskLevel)}`}
+                                                style={{ width: `${density}%` }}
                                             ></div>
                                         </div>
                                         <div className="flex justify-between mt-1 text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
-                                            <span>{displayOccupancy} / {zone.capacity}</span>
+                                            <span>{zone.currentOccupancy} / {zone.capacity}</span>
                                             <span>{density}%</span>
                                         </div>
                                     </div>

@@ -78,6 +78,13 @@ export async function getAlerts() {
     return request('/authority/alerts');
 }
 
+export async function createIncident(incidentData) {
+    return request('/incidents', {
+        method: 'POST',
+        body: JSON.stringify(incidentData)
+    });
+}
+
 // Assignments & Authorities
 export async function getAuthorities() {
     return request('/assignments/authorities');
@@ -94,10 +101,19 @@ export async function getAssignments() {
     return request('/assignments');
 }
 
+export async function respondToAssignment(status) {
+    return request('/assignments/respond', {
+        method: "POST",
+        body: JSON.stringify({ status })
+    });
+}
 export async function getMe() {
     return request('/auth/me');
 }
 
+export async function getAllUsers() {
+    return request('/auth/users');
+}
 export async function setupNode(nodeDetails) {
     return request('/auth/node-setup', {
         method: "PATCH",
@@ -113,6 +129,17 @@ export async function getAuthorityAlerts() {
     return request('/authority/alerts');
 }
 
+export async function resolveAuthorityAlert(alertId) {
+    return request(`/authority/alerts/${alertId}/resolve`, { method: 'PATCH' });
+}
+
+export async function resolveAuthorityIncident(incidentId) {
+    return request(`/authority/incidents/${incidentId}/resolve`, { method: 'PATCH' });
+}
+
+export async function resolveAllAlerts() {
+    return request('/authority/resolve-all', { method: 'POST' });
+}
 // Navigation & AI Paths
 export async function getVenueConfig() {
     return request('/navigation/config');
@@ -138,4 +165,15 @@ export async function runSimulationTick(mode) {
 
 export async function getNavigationZones() {
     return request('/navigation/zones');
+}
+
+export async function getSafeRoute(startZoneId, endZoneId) {
+    return request('/navigation/safe-route', {
+        method: 'POST',
+        body: JSON.stringify({ startZoneId, endZoneId })
+    });
+}
+
+export async function getPublicZones() {
+    return request('/zones');
 }

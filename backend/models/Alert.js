@@ -21,6 +21,9 @@ const alertSchema = new mongoose.Schema({
         enum: ["ACTIVE", "RESOLVED"],
         default: "ACTIVE",
     },
+    recommendedActions: [{
+        type: String
+    }],
     createdAt: {
         type: Date,
         default: Date.now,

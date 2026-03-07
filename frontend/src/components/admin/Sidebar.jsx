@@ -1,5 +1,6 @@
 import React from 'react';
-import { Users, LayoutDashboard, Shield, Sliders, Monitor, AlertOctagon, Brain, MapPin, Menu, X } from 'lucide-react';
+import { Users, LayoutDashboard, Shield, Sliders, Monitor, AlertOctagon, Brain, MapPin, Menu, X, LayoutGrid } from 'lucide-react';
+import logo from '../../assets/logo.png';
 
 const MENU_ITEMS = [
     { id: 'command-center', label: 'Command Center', icon: Monitor },
@@ -34,9 +35,8 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen }) 
             `}>
                 {/* Logo Header */}
                 <div className="p-5 border-b border-white/10 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-xl font-black tracking-tight">TroubleFree AI</h1>
-                        <p className="text-[10px] text-[#00AEEF] mt-1 font-black tracking-[0.2em] uppercase">Operations Command</p>
+                    <div className="flex items-center gap-3">
+                        <img src={logo} alt="TroubleFree AI" className="h-12 object-contain" />
                     </div>
                     <button onClick={() => setIsOpen(false)} className="lg:hidden p-1 text-indigo-300 hover:text-white transition-colors">
                         <X className="w-5 h-5" />

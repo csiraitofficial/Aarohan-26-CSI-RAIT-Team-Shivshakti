@@ -19,8 +19,8 @@ const assignmentSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["Active", "Inactive", "On Break"],
-            default: "Active",
+            enum: ["Pending", "Active", "Inactive", "On Break", "Rejected"],
+            default: "Pending",
         }
     },
     { timestamps: true }

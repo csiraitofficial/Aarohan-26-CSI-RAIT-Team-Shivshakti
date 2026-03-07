@@ -1,9 +1,7 @@
 import React from 'react';
 import '../Theme.css';
 
-const RouteSuggestions = ({ zones }) => {
-    // Mock logic to determine a "safe route" based on density
-    const safeNodes = zones ? zones.filter(z => (z.currentOccupancy / z.capacity) < 0.75) : [];
+const RouteSuggestions = ({ zones: _zones }) => {
 
     return (
         <div className="glass-card flex flex-col h-full border-opacity-40">

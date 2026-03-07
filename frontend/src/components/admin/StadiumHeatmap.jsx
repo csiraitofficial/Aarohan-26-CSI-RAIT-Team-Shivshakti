@@ -21,7 +21,7 @@ const STADIUM_ZONES = [
   { name: 'PressBox', xPct: 0.50, yPct: 0.20 },
 ];
 
-function getRiskLabel(value) {
+function _getRiskLabel(value) {
   if (value <= 40) return { label: 'SAFE', color: '#22c55e' };
   if (value <= 70) return { label: 'MODERATE', color: '#eab308' };
   return { label: 'CONGESTED', color: '#ef4444' };

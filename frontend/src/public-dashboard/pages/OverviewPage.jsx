@@ -33,7 +33,7 @@ const defaultCenter = {
 };
 
 export default function OverviewPage() {
-    const { zones, alerts, user, getUserLocationZone, getZoneById } = useDashboardContext();
+    const { zones, alerts, getUserLocationZone } = useDashboardContext();
     const locationZone = getUserLocationZone();
 
     // Google Maps State
@@ -42,7 +42,7 @@ export default function OverviewPage() {
         googleMapsApiKey: GOOGLE_MAPS_API_KEY
     });
 
-    const [map, setMap] = useState(null);
+    const [, setMap] = useState(null);
     const [mapType, setMapType] = useState('satellite');
     const [currentPos, setCurrentPos] = useState(defaultCenter);
     const [selectedZone, setSelectedZone] = useState(null);
@@ -65,18 +65,7 @@ export default function OverviewPage() {
         }
     }, []);
 
-    // Navigation State
-    const [fromZone, setFromZone] = useState(locationZone?.id || '');
-    const [toZone, setToZone] = useState('');
-    const [isRouting, setIsRouting] = useState(false);
 
-    // Turn-by-turn directions data
-    const directions = [
-        { id: 1, text: "Head north from your current location.", icon: <Navigation size={14} className="rotate-45" /> },
-        { id: 2, text: "Take a right before the Food Court.", icon: <Navigation size={14} className="rotate-90" /> },
-        { id: 3, text: "Walk past North Stand Level 1.", icon: <Navigation size={14} /> },
-        { id: 4, text: "Arrive at Merchandise Stall A.", icon: <MapPin size={14} /> },
-    ];
 
     // Prediction data for the graph
     const predictionData = [
@@ -252,84 +241,7 @@ export default function OverviewPage() {
                         </div>
                     </div>
 
-                    {/* Route Navigation Control Panel */}
-                    <div className="card-base">
-                        <div className="mb-6">
-                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Route Navigation Controls</h3>
-                            <p className="text-[10px] text-slate-400 font-medium uppercase mt-0.5 tracking-wider">Configure your safe path</p>
-                        </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                            <div>
-                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">From</label>
-                                <select
-                                    value={fromZone}
-                                    onChange={(e) => setFromZone(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all"
-                                >
-                                    {zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">To</label>
-                                <select
-                                    value={toZone}
-                                    onChange={(e) => setToZone(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all"
-                                >
-                                    <option value="">Select Destination</option>
-                                    {zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Route Stats Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                            <div className="bg-slate-50 rounded-xl border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Estimated Time</p>
-                                <p className="text-xl font-black text-slate-800">4 mins</p>
-                            </div>
-                            <div className="bg-slate-50 rounded-xl border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Distance</p>
-                                <p className="text-xl font-black text-slate-800">250m</p>
-                            </div>
-                            <div className="bg-slate-50 rounded-xl border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow border-l-4 border-l-emerald-500">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Safety Score</p>
-                                <p className="text-xl font-black text-emerald-600">92% SAFE</p>
-                            </div>
-                        </div>
-
-                        {/* Action Button */}
-                        <button
-                            className="w-full bg-blue-700 text-white rounded-xl px-6 py-4 font-bold text-sm uppercase tracking-widest hover:bg-blue-800 transition-all shadow-lg shadow-blue-700/20 active:scale-[0.98]"
-                            onClick={() => setIsRouting(true)}
-                        >
-                            Find Route Away From Here
-                        </button>
-
-                        {/* Turn-by-turn directions */}
-                        {isRouting && (
-                            <div className="mt-8 pt-8 border-t border-slate-50">
-                                <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                                    <Activity size={14} className="text-secondary" />
-                                    Turn-by-Turn Directions
-                                </h4>
-                                <div className="space-y-4">
-                                    {directions.map((step) => (
-                                        <div key={step.id} className="flex gap-4 items-start group">
-                                            <div className="w-6 h-6 rounded-lg bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:bg-secondary group-hover:text-white transition-colors">
-                                                {step.id}
-                                            </div>
-                                            <div className="flex-1 flex items-center justify-between pb-4 border-b border-slate-50">
-                                                <p className="text-xs font-bold text-slate-600">{step.text}</p>
-                                                <span className="text-slate-300 group-hover:text-secondary transition-colors">{step.icon}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
                 </div>
 
                 {/* Safety Alerts Feed */}

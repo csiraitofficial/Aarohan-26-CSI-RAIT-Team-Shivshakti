@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Brain, TrendingUp, AlertTriangle, Activity, Clock, Zap, ArrowUp, ArrowDown, Shield } from 'lucide-react';
 
 export default function AIPredictions() {
     const [selectedTimeframe, setSelectedTimeframe] = useState('30min');
-    const [currentRisk, setCurrentRisk] = useState('moderate');
+    const [currentRisk] = useState('moderate');
 
     const forecasts = {
         '15min': { predicted: 48500, change: '+3,200', trend: 'up', confidence: 94 },

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Clock, Navigation, AlertTriangle, Shield, CheckCircle2, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import './PublicDashboard.css';
 
 const MOCK_ZONES = [
     { id: "z1", name: "Main Entrance", currentCapacity: 120, maxCapacity: 1000, densityPercentage: 12 },
@@ -40,16 +39,17 @@ function getRiskLevel(density) {
     return 'Critical';
 }
 
-function getRiskColorHex(level, tw = false) {
-    if (tw) {
-        switch (level) {
-            case 'Safe': return 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
-            case 'Moderate': return 'text-amber-500 bg-amber-500/10 border-amber-500/20';
-            case 'High': return 'text-orange-500 bg-orange-500/10 border-orange-500/20';
-            case 'Critical': return 'text-red-500 bg-red-500/10 border-red-500/20';
-            default: return 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
-        }
+function getRiskColorClass(level) {
+    switch (level) {
+        case 'Safe': return 'color-safe';
+        case 'Moderate': return 'color-moderate';
+        case 'High': return 'color-high';
+        case 'Critical': return 'color-critical';
+        default: return 'color-safe';
     }
+}
+
+function getRiskColorHex(level) {
     switch (level) {
         case 'Safe': return '#10B981';
         case 'Moderate': return '#F59E0B';
@@ -67,10 +67,9 @@ function formatTime(date) {
 }
 
 export default function PublicDashboard() {
-    const navigate = useNavigate();
     const [zones, setZones] = useState(MOCK_ZONES.map(z => ({ ...z, riskLevel: getRiskLevel(z.densityPercentage) })));
     const [waitTimes, setWaitTimes] = useState([...MOCK_WAIT_TIMES]);
-    const [alerts, setAlerts] = useState([...MOCK_ALERTS].sort((a, b) => b.timestamp - a.timestamp));
+    const [alerts] = useState([...MOCK_ALERTS].sort((a, b) => b.timestamp - a.timestamp));
     const [activeTab, setActiveTab] = useState('fastest');
     const [greeting, setGreeting] = useState('');
     const [tooltipState, setTooltipState] = useState({ visible: false, x: 0, y: 0, title: '', titleColor: '', details: '', barWidth: '0%', barColor: '' });
@@ -156,183 +155,218 @@ export default function PublicDashboard() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col">
-            {/* Minimalist Top Nav matched to App.jsx */}
-            <nav className="bg-[#002868] text-white px-6 py-4 flex items-center justify-between shadow-xl z-50 sticky top-0">
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-white/10 rounded-xl flex items-center justify-center border border-white/20">
-                        <Activity size={18} className="text-[#00AEEF]" />
+        <div className="public-dashboard-wrapper">
+            <header className="global-header">
+                <div className="header-content">
+                    <div className="logo-area">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="10" stroke="#FFFFFF" strokeWidth="2" />
+                            <path d="M12 6V12L16 16" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                        <h1>TroubleFree AI</h1>
                     </div>
-                    <div>
-                        <h1 className="text-sm font-black tracking-widest uppercase">TroubleFree AI</h1>
-                        <p className="text-[10px] text-[#00AEEF] font-bold tracking-[0.2em] uppercase mt-0.5">Live Public Overview</p>
+                    <div className="header-info">
+                        Live Public Dashboard
                     </div>
                 </div>
-                <div className="flex gap-4">
-                    <button onClick={() => navigate('/routes')} className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors border border-white/10 flex items-center gap-2">
-                        <Navigation size={14} className="text-[#00AEEF]" /> Route Finding
-                    </button>
-                    <button onClick={() => navigate('/login')} className="px-4 py-2 bg-[#00AEEF] hover:bg-cyan-400 text-[#002868] text-xs font-bold uppercase tracking-wider rounded-lg shadow-lg hover:shadow-cyan-400/20 transition-all flex items-center gap-2">
-                        Authority Login <ArrowRight size={14} />
-                    </button>
-                </div>
-            </nav>
+            </header>
 
-            <main className="flex-1 max-w-7xl mx-auto w-full p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <main className="dashboard-container">
+                {/* Left / Center Column */}
+                <div className="main-column">
+                    {/* Module 1: Overview & Safety Hero Section */}
+                    <section className="card module-overview" aria-label="Overview and Status">
+                        <h2>{greeting}, Traveler</h2>
 
-                {/* Left Column (Main Information and Map) */}
-                <div className="lg:col-span-2 space-y-6">
-
-                    {/* Welcome Hero / Status */}
-                    <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-[#00AEEF]/5 rounded-full blur-3xl -mx-10 -my-10 pointer-events-none"></div>
-                        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-                            <div>
-                                <h2 className="text-3xl font-black text-[#002868] tracking-tight">{greeting}, Traveler</h2>
-                                <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-widest">Your dynamic crowd navigation portal.</p>
-
-                                <div className={`mt-6 inline-flex items-center gap-3 px-4 py-3 rounded-2xl border ${userZone.riskLevel === 'Safe' || userZone.riskLevel === 'Moderate' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
-                                    {userZone.riskLevel === 'Safe' || userZone.riskLevel === 'Moderate' ? (
-                                        <Shield size={20} />
-                                    ) : (
-                                        <AlertTriangle size={20} className="animate-pulse" />
-                                    )}
-                                    <span className="text-xs font-black uppercase tracking-widest">
-                                        {userZone.riskLevel === 'Safe' || userZone.riskLevel === 'Moderate' ? `You are in a ${userZone.riskLevel} Zone` : "High Congestion: Relocate Soon"}
-                                    </span>
-                                </div>
-                            </div>
+                        <div className={`safety-badge ${userZone.riskLevel === 'Safe' || userZone.riskLevel === 'Moderate' ? 'status-safe' : (userZone.riskLevel === 'Critical' ? 'status-critical' : 'status-warning')}`}>
+                            <span className="badge-icon">
+                                {userZone.riskLevel === 'Safe' || userZone.riskLevel === 'Moderate' ? (
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                ) : (
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                                )}
+                            </span>
+                            <span className="badge-text">
+                                {userZone.riskLevel === 'Safe' || userZone.riskLevel === 'Moderate' ? "You are in a Safe Zone" : "High Congestion Warning: Consider Relocating"}
+                            </span>
                         </div>
 
-                        {/* Nearby Zones Mini-Grid */}
-                        <div className="mt-8 pt-6 border-t border-slate-50">
-                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Nearby Zones Status</h3>
-                            <div className="flex flex-wrap gap-3">
+                        <div className="nearby-zones-wrapper">
+                            <h3>Nearby Zones</h3>
+                            <div className="nearby-zones-list">
                                 {nearbyZones.map(z => (
-                                    <div key={z.id} className={`px-4 py-2 rounded-xl flex items-center gap-3 border ${getRiskColorHex(z.riskLevel, true)}`}>
-                                        <div className={`w-2 h-2 rounded-full ${z.riskLevel === 'Critical' ? 'bg-red-500 animate-pulse' : z.riskLevel === 'High' ? 'bg-orange-500' : z.riskLevel === 'Moderate' ? 'bg-amber-500' : 'bg-emerald-500'}`}></div>
-                                        <span className="text-xs font-bold text-slate-700">{z.name}</span>
-                                        <span className="text-[10px] font-black opacity-80">{z.densityPercentage}% FULL</span>
+                                    <div className="zone-chip" key={`chip-${z.id}`}>
+                                        <div className="zone-chip-header">
+                                            <span className={`status-dot ${getRiskColorClass(z.riskLevel)}`}></span>
+                                            <span>{z.name}</span>
+                                        </div>
+                                        <div className="zone-chip-density">
+                                            Capacity: {z.densityPercentage}%
+                                        </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
-                    </div>
+                    </section>
 
-                    {/* Interactive Stadium Map */}
-                    <div className="bg-slate-900 rounded-3xl p-1 overflow-hidden shadow-2xl border border-white/5 relative">
-                        <div className="absolute top-6 left-6 z-10">
-                            <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                                Live Heatmap V2
-                            </h3>
-                            <p className="text-[10px] font-bold text-[#00AEEF] uppercase tracking-[0.2em] mt-0.5">Sensor-Driven Topography</p>
-                        </div>
-
-                        <div className="h-[450px] bg-[radial-gradient(circle_at_20%_30%,#1e293b_0%,#0f172a_100%)] relative">
-                            <svg viewBox="0 0 800 500" className="w-full h-full drop-shadow-2xl" preserveAspectRatio="xMidYMid meet">
-                                <g className="opacity-90">
+                    {/* Module 2: The Interactive Live Crowd Map */}
+                    <section className="card module-map" aria-label="Live Venue Map">
+                        <h2>Live Crowd Map</h2>
+                        <div className="map-container" role="group" aria-label="Abstract Map of Venue Zones">
+                            <svg viewBox="0 0 800 500" className="abstract-map" preserveAspectRatio="xMidYMid meet">
+                                <g>
                                     {zones.map(z => {
                                         const geo = MapGeometries[z.id];
                                         return (
                                             <polygon
                                                 key={z.id}
                                                 points={geo.points}
-                                                className="transition-all duration-1000 origin-center cursor-pointer hover:stroke-white hover:stroke-[3px] hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]"
+                                                className="map-zone"
+                                                role="button"
+                                                aria-label={`${z.name}, ${z.riskLevel} Risk, ${z.densityPercentage}% full`}
+                                                tabIndex="0"
                                                 style={{ fill: getRiskColorHex(z.riskLevel) }}
                                                 onMouseMove={(e) => handleMapHover(e, z)}
                                                 onMouseLeave={handleMapLeave}
+                                                onFocus={(e) => handleMapHover(e, z)}
+                                                onBlur={handleMapLeave}
                                             />
                                         );
                                     })}
                                 </g>
-                                {/* User Location Pulse */}
-                                <g transform={`translate(${MapGeometries[userLocationId].center.x}, ${MapGeometries[userLocationId].center.y})`}>
-                                    <circle cx="0" cy="0" r="25" className="fill-[#00AEEF]/20 animate-ping"></circle>
-                                    <circle cx="0" cy="0" r="10" className="fill-[#00AEEF] stroke-white stroke-2"></circle>
-                                </g>
+                                <circle cx={MapGeometries[userLocationId].center.x} cy={MapGeometries[userLocationId].center.y} r="10" className="pulse-dot"></circle>
                             </svg>
 
-                            {/* Tooltip */}
-                            {tooltipState.visible && (
-                                <div
-                                    className="absolute pointer-events-none bg-[#0a0f18]/95 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-4 min-w-[180px] z-50 transform -translate-x-1/2 -translate-y-full mt-[-10px] animate-in slide-in-from-bottom-2 fade-in"
-                                    style={{ left: tooltipState.x, top: tooltipState.y }}
-                                >
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: tooltipState.titleColor }}>{tooltipState.title}</h4>
-                                    <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mb-2">
-                                        <div className="h-full transition-all duration-500" style={{ width: tooltipState.barWidth, backgroundColor: tooltipState.barColor }}></div>
-                                    </div>
-                                    <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest">{tooltipState.details}</p>
+                            {/* Hover Tooltip */}
+                            <div className={`map-tooltip ${tooltipState.visible ? 'visible' : ''}`} style={{ left: tooltipState.x, top: tooltipState.y }}>
+                                <div className="tooltip-title" style={{ color: tooltipState.titleColor }}>{tooltipState.title}</div>
+                                <div className="tooltip-bar-bg">
+                                    <div className="tooltip-bar-fill" style={{ width: tooltipState.barWidth, backgroundColor: tooltipState.barColor }}></div>
                                 </div>
-                            )}
+                                <div className="tooltip-details">{tooltipState.details}</div>
+                            </div>
                         </div>
-                    </div>
+                        <div className="map-legend">
+                            <div className="legend-item"><span className="legend-dot color-safe"></span> Safe (0-50%)</div>
+                            <div className="legend-item"><span className="legend-dot color-moderate"></span> Moderate (50-75%)</div>
+                            <div className="legend-item"><span className="legend-dot color-high"></span> High Risk (75-90%)</div>
+                            <div className="legend-item"><span className="legend-dot color-critical"></span> Critical (90%+)</div>
+                        </div>
+                    </section>
 
+                    {/* Module 3: Safe Route Suggestion Engine */}
+                    <section className="card module-route" aria-label="Route Suggestions">
+                        <h2>Suggested Routes to Destination</h2>
+                        <nav className="route-tabs" aria-label="Route options">
+                            <button className={`tab-btn ${activeTab === 'fastest' ? 'active' : ''}`} onClick={() => setActiveTab('fastest')}>Fastest</button>
+                            <button className={`tab-btn ${activeTab === 'safest' ? 'active' : ''}`} onClick={() => setActiveTab('safest')}>Safest</button>
+                            <button className={`tab-btn ${activeTab === 'accessible' ? 'active' : ''}`} onClick={() => setActiveTab('accessible')}>Accessible</button>
+                        </nav>
+
+                        <div className="tab-content-container">
+                            <div className={`tab-pane ${activeTab === 'fastest' ? 'active fade-in' : ''}`}>
+                                <div className="route-info">
+                                    <span className="route-time">Estimated: 4 mins</span>
+                                </div>
+                                <ul className="route-timeline">
+                                    <li><span className="timeline-dot"></span><span className="route-loc">Start: {userZone.name}</span></li>
+                                    <li><span className="timeline-dot"></span>Ticketing</li>
+                                    <li><span className="timeline-dot"></span><span className="route-loc">Destination: {destZone.name}</span></li>
+                                </ul>
+                            </div>
+
+                            <div className={`tab-pane ${activeTab === 'safest' ? 'active fade-in' : ''}`}>
+                                <div className="route-info">
+                                    <span className="route-badge badge-safe">Bypasses Food Court Congestion</span>
+                                    <span className="route-time">Estimated: 6 mins</span>
+                                </div>
+                                <ul className="route-timeline">
+                                    <li><span className="timeline-dot"></span><span className="route-loc">Start: {userZone.name}</span></li>
+                                    <li><span className="timeline-dot"></span>Exit Gate 2</li>
+                                    <li><span className="timeline-dot"></span><span className="route-loc">Destination: {destZone.name}</span></li>
+                                </ul>
+                            </div>
+
+                            <div className={`tab-pane ${activeTab === 'accessible' ? 'active fade-in' : ''}`}>
+                                <div className="route-info">
+                                    <span className="route-badge badge-info">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" /><path d="M12 7v8M8 11h8M10 22v-7l-2-2M14 22v-7l2-2" /></svg>
+                                        Stair-free route
+                                    </span>
+                                    <span className="route-time">Estimated: 7 mins</span>
+                                </div>
+                                <ul className="route-timeline">
+                                    <li><span className="timeline-dot"></span><span className="route-loc">Start: {userZone.name}</span></li>
+                                    <li><span className="timeline-dot"></span>Elevator C</li>
+                                    <li><span className="timeline-dot"></span><span className="route-loc">Destination: {destZone.name}</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </section>
                 </div>
 
-                {/* Right Column (Info / Alerts) */}
-                <div className="space-y-6">
-
-                    {/* Wait Times Box */}
-                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col h-[320px]">
-                        <div className="flex items-center gap-2 mb-6">
-                            <Clock size={16} className="text-[#002868]" />
-                            <h3 className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Network Services</h3>
-                        </div>
-
-                        <div className="space-y-4 flex-1">
+                {/* Right SideBar Column */}
+                <div className="sidebar-column">
+                    {/* Module 5: Wait Time Estimation & Predictive Analytics */}
+                    <section className="card module-wait-times" aria-label="Wait Time Estimation">
+                        <h2>Current Queues</h2>
+                        <div className="wait-times-list">
                             {waitTimes.map(wt => {
                                 const pct = Math.min((wt.estimatedMinutes / wt.maxMinutes) * 100, 100);
                                 return (
-                                    <div key={wt.id} className="p-3 bg-slate-50 border border-slate-100 rounded-2xl">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <span className="text-xs font-bold text-slate-700">{wt.serviceName}</span>
-                                            <div className="flex items-center gap-1">
-                                                <span className="text-xs font-black text-slate-800">{wt.estimatedMinutes} min</span>
+                                    <div className="wait-time-item" key={wt.id}>
+                                        <div className="wt-header">
+                                            <span>{wt.serviceName}</span>
+                                            <div>
+                                                <span className="wt-minutes">{wt.estimatedMinutes} min</span>
+                                                <span className={`wt-trend trend-${wt.trend}`} aria-label={`Trend: ${wt.trend}`}>
+                                                    {wt.trend === 'increasing' && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>}
+                                                    {wt.trend === 'decreasing' && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>}
+                                                    {wt.trend === 'stable' && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"></line></svg>}
+                                                </span>
                                             </div>
                                         </div>
-                                        <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
-                                            <div className="h-full bg-[#002868] transition-all duration-500" style={{ width: `${pct}%` }}></div>
+                                        <div className="wt-bar-bg">
+                                            <div className="wt-bar-fill" style={{ width: `${pct}%` }}></div>
                                         </div>
                                     </div>
                                 );
                             })}
                         </div>
-                    </div>
 
-                    {/* AI Insights & Alerts */}
-                    <div className="bg-[#0a0f18] rounded-3xl p-6 border border-white/5 shadow-2xl flex-1 max-h-[500px] flex flex-col">
-                        <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
-                            <div className="flex items-center gap-2">
-                                <AlertTriangle size={16} className="text-orange-400" />
-                                <h3 className="text-[10px] font-black text-white uppercase tracking-widest">Live Alert Stream</h3>
+                        <div className="ai-insight-box">
+                            <div className="ai-sparkle">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" />
+                                </svg>
                             </div>
-                            <span className="bg-white/10 text-white/50 px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Polling...</span>
+                            <p className="ai-text"><strong>TroubleFree AI</strong> predicts peak congestion at the <span>{worstZone.name}</span> will clear up in approximately <span>{predictedTime}</span> minutes.</p>
                         </div>
+                    </section>
 
-                        {/* AI Summary Box */}
-                        <div className="mb-6 bg-secondary/10 border border-secondary/20 rounded-2xl p-4">
-                            <p className="text-[10px] text-white/80 leading-relaxed font-medium">
-                                <span className="text-secondary font-black tracking-widest uppercase mr-2">SYSTEM PREDICTION: </span>
-                                Peak congestion at {worstZone.name} is scheduled to stabilize in
-                                <span className="text-secondary font-black text-xs mx-1">{predictedTime}</span> mins. Maintain current routes.
-                            </p>
+                    {/* Module 4: Real-Time Alerts Feed */}
+                    <section className="card module-alerts" aria-label="Live Alerts Feed">
+                        <div className="alerts-header">
+                            <h2>Live Alerts Feed</h2>
+                            <span className="live-indicator"><span className="dot-pulse-small"></span> Live</span>
                         </div>
-
-                        {/* Alert List */}
-                        <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+                        <div className="alerts-feed">
                             {alerts.map((alert, index) => (
-                                <div key={alert.id} className={`p-4 rounded-2xl border ${alert.severity === 'Critical' ? 'bg-red-500/10 border-red-500/20' : alert.severity === 'Warning' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-white/5 border-white/10'}`}>
-                                    <div className="flex justify-between items-start mb-2">
-                                        <h4 className={`text-[10px] font-black uppercase tracking-widest ${alert.severity === 'Critical' ? 'text-red-400' : alert.severity === 'Warning' ? 'text-amber-400' : 'text-slate-300'}`}>{alert.headline}</h4>
-                                        <span className="text-[8px] font-bold text-white/40 uppercase">{formatTime(alert.timestamp)}</span>
+                                <div key={alert.id} className={`alert-card alert-${alert.severity} ${index === 0 && new Date() - alert.timestamp < 10000 ? 'alert-entering' : ''}`}>
+                                    <div className="alert-header">
+                                        <span className="alert-icon">
+                                            {alert.severity === 'Critical' && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>}
+                                            {alert.severity === 'Warning' && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>}
+                                            {alert.severity === 'Info' && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>}
+                                        </span>
+                                        <span className="alert-headline">{alert.headline}</span>
+                                        <span className="alert-time">{formatTime(alert.timestamp)}</span>
                                     </div>
-                                    <p className="text-[10px] text-white/70">{alert.description}</p>
+                                    <div className="alert-desc">{alert.description}</div>
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </section>
                 </div>
             </main>
         </div>

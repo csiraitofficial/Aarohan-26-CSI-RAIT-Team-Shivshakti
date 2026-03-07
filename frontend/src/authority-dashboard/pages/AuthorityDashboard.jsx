@@ -1,35 +1,68 @@
-import React, { useState, useEffect } from 'react';
-import { Activity, Shield, AlertCircle, Users, MapPin, ArrowRight, Info, CheckCircle, Radio, Briefcase, Plus, Send } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Activity, Shield, AlertCircle, Users, MapPin, ArrowRight, Radio, Briefcase, AlertTriangle } from 'lucide-react';
 import TelemetryFooter from '../components/TelemetryFooter';
-import { getMe, setupNode, getAuthorityZones, getAuthorityAlerts, getNavigationZones } from '../../services/api';
+import { getMe, getAuthorityZones, getAuthorityAlerts } from '../../services/api';
 
 const AuthorityDashboard = () => {
     const [user, setUser] = useState(null);
     const [zones, setZones] = useState([]);
     const [alerts, setAlerts] = useState([]);
-    const [navZones, setNavZones] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Form State
-    const [gate, setGate] = useState('');
-    const [equipment, setEquipment] = useState([]);
-    const [responsibility, setResponsibility] = useState('');
+    // Audio & Toast State
+    const [activeToast, setActiveToast] = useState(null);
+    const alertingZonesRef = useRef(new Set());
+    const audioRef = useRef(null);
+
+    useEffect(() => {
+        audioRef.current = new Audio('/sounds/buzzer.mp3');
+    }, []);
 
     const fetchAllData = async () => {
         try {
-            const [userRes, zonesRes, alertsRes, navRes] = await Promise.all([
+            const [meRes, zonesRes, alertsRes] = await Promise.all([
                 getMe(),
                 getAuthorityZones(),
-                getAuthorityAlerts(),
-                getNavigationZones()
+                getAuthorityAlerts()
             ]);
 
-            if (userRes.success) setUser(userRes.user);
-            if (zonesRes.success) setZones(zonesRes.zones);
-            if (alertsRes.success) setAlerts(alertsRes.alerts);
-            if (navRes.success) setNavZones(navRes.zones);
+            if (meRes.success) setUser(meRes.user);
+            const incomingZones = zonesRes.data || [];
+            setZones(incomingZones);
+            setAlerts(alertsRes.data || []);
+
+            // --- Audio Alert Logic ---
+            let playedSound = false;
+            let newToastMsg = null;
+            const currentAlerts = new Set(alertingZonesRef.current);
+
+            incomingZones.forEach(z => {
+                const density = z.capacity > 0 ? (z.currentOccupancy / z.capacity) : 0;
+                if (density > 1.0) {
+                    if (!currentAlerts.has(z._id)) {
+                        playedSound = true;
+                        newToastMsg = `🚨 EMERGENCY: HIGH CROWD AT ${z.zoneName.toUpperCase()}`;
+                        currentAlerts.add(z._id);
+                    }
+                } else {
+                    currentAlerts.delete(z._id);
+                }
+            });
+
+            alertingZonesRef.current = currentAlerts;
+
+            if (playedSound) {
+                if (audioRef.current) {
+                    audioRef.current.currentTime = 0;
+                    audioRef.current.play().catch(e => console.log('Autoplay blocked', e));
+                }
+                if (newToastMsg) {
+                    setActiveToast(newToastMsg);
+                    setTimeout(() => setActiveToast(null), 8000);
+                }
+            }
         } catch (error) {
-            console.error("Error fetching authority data:", error);
+            console.error("Error fetching authority telemetry:", error);
         } finally {
             setLoading(false);
         }
@@ -41,27 +74,6 @@ const AuthorityDashboard = () => {
         return () => clearInterval(interval);
     }, []);
 
-    const handleSetupSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const res = await setupNode({
-                gate,
-                equipment,
-                responsibility
-            });
-            if (res.success) {
-                setUser(res.user);
-            }
-        } catch (error) {
-            console.error("Setup Error:", error);
-        }
-    };
-
-    const toggleEquipment = (item) => {
-        setEquipment(prev =>
-            prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
-        );
-    };
 
     if (loading) {
         return (
@@ -72,87 +84,7 @@ const AuthorityDashboard = () => {
         );
     }
 
-    // 1. Initial Node Setup Form
-    if (user && !user.isNodeSetup) {
-        return (
-            <div className="max-w-2xl mx-auto py-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <div className="text-center mb-10">
-                    <div className="w-20 h-20 bg-secondary/10 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-secondary/20 shadow-xl shadow-secondary/10">
-                        <Shield size={40} className="text-secondary animate-pulse" />
-                    </div>
-                    <h1 className="text-3xl font-black text-slate-800 tracking-tight uppercase italic underline decoration-sky-400 decoration-[4px] underline-offset-8">Authority Node Setup</h1>
-                    <p className="mt-4 text-slate-400 font-bold uppercase text-[10px] tracking-widest">Initialize your command post credentials for sector stabilization.</p>
-                </div>
-
-                <div className="card-base p-8 border-t-4 border-t-secondary">
-                    <div className="mb-8 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4">
-                        <MapPin className="text-secondary" />
-                        <div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Assigned Jurisdiction</p>
-                            <p className="text-lg font-black text-slate-800 uppercase italic">
-                                {user.zoneAssigned ? user.zoneAssigned.zoneName : 'Awaiting Sector Assignment'}
-                            </p>
-                        </div>
-                    </div>
-
-                    <form onSubmit={handleSetupSubmit} className="space-y-8">
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Primary Post / Gate</label>
-                            <input
-                                type="text"
-                                required
-                                value={gate}
-                                onChange={(e) => setGate(e.target.value)}
-                                placeholder="e.g., Gate 4, Main Entrance North"
-                                className="w-full bg-slate-50 border-none rounded-xl px-5 py-4 font-bold text-slate-700 focus:ring-2 focus:ring-secondary/50 outline-none placeholder:text-slate-300 italic"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Equipment Inventory</label>
-                            <div className="grid grid-cols-2 gap-3">
-                                {['Radio Link', 'Med Kit', 'Crowd Barrier', 'Bio-Scanner', 'Body Cam', 'Emergency Flare'].map(item => (
-                                    <button
-                                        key={item}
-                                        type="button"
-                                        onClick={() => toggleEquipment(item)}
-                                        className={`flex items-center gap-3 p-4 rounded-xl border transition-all text-xs font-bold uppercase tracking-tight ${equipment.includes(item) ? 'bg-secondary text-white border-secondary shadow-lg shadow-secondary/20' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}
-                                    >
-                                        <Plus size={14} className={equipment.includes(item) ? 'rotate-45' : ''} />
-                                        {item}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Operational Responsibility</label>
-                            <select
-                                required
-                                value={responsibility}
-                                onChange={(e) => setResponsibility(e.target.value)}
-                                className="w-full bg-slate-50 border-none rounded-xl px-5 py-4 font-bold text-slate-700 focus:ring-2 focus:ring-secondary/50 outline-none italic"
-                            >
-                                <option value="" disabled>Select Core Directive...</option>
-                                <option value="Crowd Management">Crowd Management & Flow</option>
-                                <option value="Access Control">Access Control & Search</option>
-                                <option value="Emergency Response">Emergency Response Lead</option>
-                                <option value="Perimeter Security">Perimeter & Gate Security</option>
-                                <option value="VIP Escort">VIP Escort & Zone Clearance</option>
-                            </select>
-                        </div>
-
-                        <button type="submit" className="w-full bg-primary hover:bg-slate-900 text-white font-black py-5 rounded-2xl shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-3 uppercase tracking-[0.3em] italic">
-                            <Send size={20} />
-                            Deploy Unit
-                        </button>
-                    </form>
-                </div>
-            </div>
-        );
-    }
-
-    // 2. Main Dashboard (if setup complete)
+    // Main Dashboard
     const activeAlerts = (alerts || []).filter(a => a && a.status !== 'RESOLVED').length;
     const assignedZoneData = (zones || []).find(z => z && z._id === user?.zoneAssigned?._id);
 
@@ -175,6 +107,20 @@ const AuthorityDashboard = () => {
 
     return (
         <div className="space-y-6">
+            {/* Notification Toast */}
+            {activeToast && (
+                <div className="fixed top-6 right-6 z-[100] animate-in slide-in-from-right-8 fade-in duration-500 bg-red-600 border-2 border-red-400 text-white px-6 py-4 rounded-2xl shadow-[0_0_40px_rgba(220,38,38,0.5)] flex items-center gap-4">
+                    <div className="relative">
+                        <AlertTriangle className="animate-bounce" size={28} />
+                        <span className="absolute inset-0 rounded-full animate-ping border-2 border-white/50"></span>
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-200">Urgent Dispatch</p>
+                        <p className="text-lg font-black tracking-tight italic">{activeToast}</p>
+                    </div>
+                </div>
+            )}
+
             {/* Sector Highlight Header */}
             {assignedZoneData && (
                 <div className="bg-[#002868] p-8 rounded-3xl text-white relative overflow-hidden shadow-2xl shadow-blue-900/20 mb-8 border border-white/10 group">
@@ -217,15 +163,56 @@ const AuthorityDashboard = () => {
                 </div>
             )}
 
-            {!assignedZoneData && (
-                <div className="bg-red-50 border border-red-100 p-8 rounded-3xl text-center mb-8">
-                    <AlertCircle className="text-red-500 mx-auto mb-4" size={40} />
-                    <h2 className="text-xl font-black text-red-600 uppercase italic tracking-tight">Deployment Pending</h2>
-                    <p className="text-sm font-bold text-red-400 uppercase tracking-widest mt-2 italic">Awaiting manual sector assignment from Admin Command Center.</p>
-                </div>
-            )}
+
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Sector Capacity - from admin form */}
+                <div className="card-base group hover:border-secondary transition-all flex flex-col justify-between">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="p-2 bg-blue-50 border border-blue-100 rounded-lg text-blue-500 group-hover:text-secondary group-hover:border-secondary/20 transition-colors">
+                            <Users size={18} />
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sector Capacity</span>
+                    </div>
+                    <div className="flex items-end justify-between">
+                        <p className="text-3xl font-bold text-slate-800 tracking-tight">{assignedZoneData?.capacity?.toLocaleString() || '—'}</p>
+                        <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Max Allowed</span>
+                    </div>
+                </div>
+
+                {/* Active Crowd - synced with admin */}
+                <div className="card-base group hover:border-secondary transition-all flex flex-col justify-between">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="p-2 bg-emerald-50 border border-emerald-100 rounded-lg text-emerald-500 group-hover:text-secondary group-hover:border-secondary/20 transition-colors">
+                            <Activity size={18} />
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Crowd</span>
+                    </div>
+                    <div className="flex items-end justify-between">
+                        <p className="text-3xl font-bold text-slate-800 tracking-tight">{assignedZoneData?.currentOccupancy?.toLocaleString() || '0'}</p>
+                        <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Live Count</span>
+                    </div>
+                </div>
+
+                {/* Density Percentage */}
+                <div className="card-base group hover:border-secondary transition-all flex flex-col justify-between">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className={`p-2 rounded-lg border transition-colors ${assignedZoneData ? (() => { const d = assignedZoneData.currentOccupancy / assignedZoneData.capacity; return d >= 0.9 ? 'bg-red-50 border-red-100 text-red-500' : d >= 0.7 ? 'bg-amber-50 border-amber-100 text-amber-500' : 'bg-emerald-50 border-emerald-100 text-emerald-500'; })() : 'bg-slate-50 border-slate-100 text-slate-500'}`}>
+                            <AlertTriangle size={18} />
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Density</span>
+                    </div>
+                    <div className="flex items-end justify-between">
+                        <p className="text-3xl font-bold text-slate-800 tracking-tight">
+                            {assignedZoneData ? `${Math.round((assignedZoneData.currentOccupancy / assignedZoneData.capacity) * 100)}%` : '—'}
+                        </p>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${assignedZoneData ? (() => { const d = assignedZoneData.currentOccupancy / assignedZoneData.capacity; return d >= 0.9 ? 'text-red-500' : d >= 0.7 ? 'text-amber-500' : 'text-emerald-500'; })() : 'text-slate-400'}`}>
+                            {assignedZoneData ? (() => { const d = assignedZoneData.currentOccupancy / assignedZoneData.capacity; return d >= 0.9 ? 'Critical' : d >= 0.7 ? 'High' : 'Normal'; })() : 'N/A'}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Active Alerts */}
                 <div className="card-base group hover:border-secondary transition-all flex flex-col justify-between">
                     <div className="flex justify-between items-start mb-4">
                         <div className="p-2 bg-slate-50 border border-slate-100 rounded-lg text-slate-500 group-hover:text-secondary group-hover:border-secondary/20 transition-colors">
@@ -236,35 +223,6 @@ const AuthorityDashboard = () => {
                     <div className="flex items-end justify-between">
                         <p className="text-3xl font-bold text-slate-800 tracking-tight">{activeAlerts}</p>
                         <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Across Venue</span>
-                    </div>
-                </div>
-
-                <div className="card-base group hover:border-secondary transition-all flex flex-col justify-between">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="p-2 bg-slate-50 border border-slate-100 rounded-lg text-slate-500 group-hover:text-secondary group-hover:border-secondary/20 transition-colors">
-                            <Shield size={18} />
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Your Unit Prep</span>
-                    </div>
-                    <div className="flex items-end justify-between">
-                        <p className="text-3xl font-bold text-slate-800 tracking-tight">{(user?.nodeDetails?.equipment || []).length}</p>
-                        <span className="text-[10px] font-bold text-secondary uppercase tracking-wider">Items Logged</span>
-                    </div>
-                </div>
-
-                <div className="card-base !bg-primary border-primary flex flex-col justify-between text-white lg:col-span-2">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="p-2 bg-white/10 border border-white/20 rounded-lg text-white">
-                            <Activity size={18} />
-                        </div>
-                        <span className="text-[10px] font-bold text-white/70 uppercase tracking-widest">Unit Status</span>
-                    </div>
-                    <div className="flex items-end justify-between">
-                        <div>
-                            <p className="text-3xl font-bold tracking-tight uppercase italic">{user?.isNodeSetup ? 'Active Duty' : 'Setup Required'}</p>
-                            <p className="text-[10px] font-bold text-sky-300 uppercase tracking-[0.2em] mt-1">Operational ID: {user?._id?.slice(-8).toUpperCase() || 'UNKNOWN'}</p>
-                        </div>
-                        <CheckCircle size={40} className="text-emerald-400" />
                     </div>
                 </div>
             </div>
@@ -303,72 +261,6 @@ const AuthorityDashboard = () => {
                                 </div>
                             );
                         })}
-                    </div>
-                </div>
-            </div>
-
-            {/* Right Column: Alerts & Tasks */}
-            <div className="space-y-6">
-                {/* Crowd Diversion Alerts (AI Powered) */}
-                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-                    <div className="flex items-center gap-2 mb-6">
-                        <Zap size={18} className="text-orange-500" />
-                        <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">AI Crowd Diversion</h3>
-                    </div>
-
-                    <div className="space-y-4">
-                        {navZones.filter(z => (z.currentOccupancy / z.capacity) > 0.7).length > 0 ? (
-                            navZones.filter(z => (z.currentOccupancy / z.capacity) > 0.7).map((z, idx) => (
-                                <div key={idx} className="p-4 bg-orange-50 rounded-2xl border border-orange-100 border-dashed animate-pulse">
-                                    <div className="flex items-start gap-3">
-                                        <AlertCircle size={18} className="text-orange-600 shrink-0 mt-0.5" />
-                                        <div>
-                                            <p className="text-[10px] font-black text-orange-800 uppercase tracking-widest">Congestion Alert: {z.name}</p>
-                                            <p className="text-[9px] font-bold text-orange-600/70 uppercase tracking-wider mt-1 leading-relaxed">
-                                                Density at {Math.round((z.currentOccupancy / z.capacity) * 100)}%. Suggest diverting traffic to adjacent low-density sectors.
-                                            </p>
-                                            <div className="mt-3 flex items-center gap-2">
-                                                <span className="text-[8px] font-black bg-white px-2 py-1 rounded-lg text-orange-600 border border-orange-100 uppercase">Suggested Reroute</span>
-                                                <ArrowRight size={10} className="text-orange-400" />
-                                                <span className="text-[8px] font-black text-slate-400 uppercase">Sector B → Gate 4</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="p-8 text-center bg-slate-50 rounded-3xl border border-slate-100 border-dashed">
-                                <CheckCircle size={24} className="text-emerald-400 mx-auto mb-3" />
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No Critical Congestions</p>
-                                <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-1">Flow dynamics stable across all zones</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-2">
-                            <AlertOctagon size={18} className="text-red-500" />
-                            <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Emergency Broadcasts</h3>
-                        </div>
-                        <span className="bg-red-50 text-red-600 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest border border-red-100">Live</span>
-                    </div>
-
-                    <div className="space-y-4">
-                        {alerts.length > 0 ? alerts.map((alert) => (
-                            <div key={alert._id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-slate-100 transition-all cursor-pointer">
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className={`text-[8px] font-black px-2 py-0.5 rounded text-white ${alert.severity === 'CRITICAL' ? 'bg-red-600' : 'bg-orange-500'}`}>
-                                        {alert.severity}
-                                    </span>
-                                    <span className="text-[8px] font-bold text-slate-400">{new Date(alert.createdAt).toLocaleTimeString()}</span>
-                                </div>
-                                <p className="text-[10px] font-bold text-slate-800 leading-relaxed uppercase tracking-wider">{alert.message}</p>
-                            </div>
-                        )) : (
-                            <p className="text-center py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Secure Environment</p>
-                        )}
                     </div>
                 </div>
             </div>

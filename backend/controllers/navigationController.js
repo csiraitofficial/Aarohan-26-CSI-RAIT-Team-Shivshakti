@@ -180,13 +180,26 @@ export const runSimulationTick = async (req, res) => {
                 if (zone.type === "entry") inflow = Math.floor(Math.random() * 10) + 5;
                 if (zone.type === "exit") outflow = Math.floor(Math.random() * 8) + 3;
                 else outflow = Math.floor(Math.random() * 5) + 2;
-            } else if (mode === "SURGE") {
+            } else if (mode === "RISING" || mode === "SURGE") {
                 if (zone.type === "entry") {
                     inflow = Math.floor(Math.random() * 30) + 20;
                     logs.push(`[SYSTEM] Large inflow detected at ${zone.name}`);
+                } else {
+                    inflow = Math.floor(Math.random() * 15) + 5;
                 }
                 outflow = Math.floor(Math.random() * 10) + 5;
+            } else if (mode === "CRITICAL" || mode === "EMERGENCY") {
+                if (zone.type === "entry") {
+                    inflow = Math.floor(Math.random() * 50) + 40;
+                    logs.push(`[CRITICAL] Massive crowd surge at ${zone.name}`);
+                } else {
+                    inflow = Math.floor(Math.random() * 30) + 15;
+                }
+                outflow = Math.floor(Math.random() * 5); // Minimum outflow during crush
             }
+
+            zone.entryCount = inflow;
+            zone.exitCount = outflow;
 
             zone.currentOccupancy = Math.max(0, zone.currentOccupancy + inflow - outflow);
 

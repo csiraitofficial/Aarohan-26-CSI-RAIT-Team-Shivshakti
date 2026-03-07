@@ -19,17 +19,15 @@ const DashboardLayout = () => {
             '/admin/zones': { title: 'Zone Configuration', desc: 'Manage sector definitions and capacity limits' },
             '/admin/deployment': { title: 'Authority Deployment', desc: 'Allocate resources and official personnel' },
             '/admin/analytics': { title: 'Deep Analytics', desc: 'Historical data analysis and reporting' },
-            '/admin/settings': { title: 'System Settings', desc: 'Configure platform parameters and AI sensitivity' },
 
             '/authority': { title: 'Assigned Zones', desc: 'Your designated sectors and live telemetry' },
             '/authority/alerts': { title: 'Live Alerts', desc: 'Critical incidents requiring immediate action' },
-            '/authority/flow': { title: 'Navigation Guidance', desc: 'Direct crowd flow to optimize venue safety' },
-            '/authority/status': { title: 'Deployment Status', desc: 'Real-time status of all personnel' },
+            '/authority/safe-route': { title: 'Safe Route Navigator', desc: 'AI-powered pathfinding avoiding high-risk zones' },
+
 
             '/public': { title: 'Crowd Map', desc: 'Real-time safety insights for your movements' },
+            '/public/routes': { title: 'Safe Route Navigator', desc: 'AI-powered pathfinding avoiding high-risk zones' },
             '/public/map': { title: 'Live Venue Map', desc: 'Interactive environmental layout' },
-            '/public/routes': { title: 'Safe Routes', desc: 'AI-guided navigation through least crowded areas' },
-            '/public/alerts': { title: 'Safety Alerts', desc: 'Live environment broadcasts' },
             '/public/help': { title: 'Help Center', desc: 'Expert guides and live support' },
         };
 

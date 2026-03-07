@@ -33,6 +33,16 @@ const userSchema = new mongoose.Schema(
       type: Object,
       default: {},
     },
+    assignmentStatus: {
+      type: String,
+      enum: ["None", "Pending", "Accepted", "Rejected"],
+      default: "None",
+    },
+    status: {
+      type: String,
+      enum: ["PENDING", "APPROVED", "REJECTED"],
+      default: "APPROVED", // Default to APPROVED for now so new signups work unless user wants it otherwise
+    },
   },
   { timestamps: true }
 );

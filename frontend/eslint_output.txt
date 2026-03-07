@@ -1,0 +1,293 @@
+﻿
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\authority-dashboard\components\PredictionWidget.jsx
+  48:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  46 |         const projectedDensity = Math.round((projectedOccupancy / criticalZone.capacity) * 100);
+  47 |
+> 48 |         setPrediction({ projectedOccupancy, projectedDensity, trend, alertColor });
+     |         ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  49 |
+  50 |     }, [criticalZone]);
+  51 |  react-hooks/set-state-in-effect
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\authority-dashboard\components\RouteSuggestions.jsx
+  6:11  error  'safeNodes' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\authority-dashboard\components\SimulatedLiveMap.jsx
+  66:44   error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  64 |         for (let i = 0; i < 400; i++) {
+  65 |             temp.push({
+> 66 |                 offset: new THREE.Vector3((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 4),
+     |                                            ^^^^^^^^^^^^^ Cannot call impure function
+  67 |                 velocity: new THREE.Vector3((Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.04),
+  68 |                 speed: 0.2 + Math.random() * 0.8
+  69 |             });                                                        react-hooks/purity
+  66:71   error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  64 |         for (let i = 0; i < 400; i++) {
+  65 |             temp.push({
+> 66 |                 offset: new THREE.Vector3((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 4),
+     |                                                                       ^^^^^^^^^^^^^ Cannot call impure function
+  67 |                 velocity: new THREE.Vector3((Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.04),
+  68 |                 speed: 0.2 + Math.random() * 0.8
+  69 |             });                             react-hooks/purity
+  66:98   error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  64 |         for (let i = 0; i < 400; i++) {
+  65 |             temp.push({
+> 66 |                 offset: new THREE.Vector3((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 4),
+     |                                                                                                  ^^^^^^^^^^^^^ Cannot call impure function
+  67 |                 velocity: new THREE.Vector3((Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.04),
+  68 |                 speed: 0.2 + Math.random() * 0.8
+  69 |             });  react-hooks/purity
+  67:46   error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  65 |             temp.push({
+  66 |                 offset: new THREE.Vector3((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 4),
+> 67 |                 velocity: new THREE.Vector3((Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.04),
+     |                                              ^^^^^^^^^^^^^ Cannot call impure function
+  68 |                 speed: 0.2 + Math.random() * 0.8
+  69 |             });
+  70 |         }                                                                                    react-hooks/purity
+  67:76   error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  65 |             temp.push({
+  66 |                 offset: new THREE.Vector3((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 4),
+> 67 |                 velocity: new THREE.Vector3((Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.04),
+     |                                                                            ^^^^^^^^^^^^^ Cannot call impure function
+  68 |                 speed: 0.2 + Math.random() * 0.8
+  69 |             });
+  70 |         }                                                      react-hooks/purity
+  67:106  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  65 |             temp.push({
+  66 |                 offset: new THREE.Vector3((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 4),
+> 67 |                 velocity: new THREE.Vector3((Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.04),
+     |                                                                                                          ^^^^^^^^^^^^^ Cannot call impure function
+  68 |                 speed: 0.2 + Math.random() * 0.8
+  69 |             });
+  70 |         }                        react-hooks/purity
+  68:30   error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  66 |                 offset: new THREE.Vector3((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 4),
+  67 |                 velocity: new THREE.Vector3((Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.04),
+> 68 |                 speed: 0.2 + Math.random() * 0.8
+     |                              ^^^^^^^^^^^^^ Cannot call impure function
+  69 |             });
+  70 |         }
+  71 |         return temp;                                                                                                       react-hooks/purity
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\authority-dashboard\pages\AlertsDashboard.jsx
+  32:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  30 |     // Polling
+  31 |     useEffect(() => {
+> 32 |         fetchDashboardData();
+     |         ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  33 |         const interval = setInterval(() => {
+  34 |             fetchDashboardData();
+  35 |         }, 5000);  react-hooks/set-state-in-effect
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\authority-dashboard\pages\ReportsDashboard.jsx
+  35:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  33 |
+  34 |     useEffect(() => {
+> 35 |         fetchData();
+     |         ^^^^^^^^^ Avoid calling setState() directly within an effect
+  36 |         const interval = setInterval(fetchData, 5000);
+  37 |         return () => clearInterval(interval);
+  38 |     }, []);  react-hooks/set-state-in-effect
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\authority-dashboard\pages\ZonesDashboard.jsx
+  36:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  34 |
+  35 |     useEffect(() => {
+> 36 |         fetchData();
+     |         ^^^^^^^^^ Avoid calling setState() directly within an effect
+  37 |         const interval = setInterval(fetchData, 5000);
+  38 |         return () => clearInterval(interval);
+  39 |     }, []);  react-hooks/set-state-in-effect
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\components\StadiumHeatmap.jsx
+  135:8  warning  React Hook useEffect has a missing dependency: 'zones'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\components\admin\AIPredictions.jsx
+  1:27  error  'useEffect' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                no-unused-vars
+  6:25  error  'setCurrentRisk' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\components\admin\CommandCenter.jsx
+  10:12  error  'alerts' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\components\admin\IncidentManagement.jsx
+   43:18  error    'err' is defined but never used                                                                                no-unused-vars
+   69:8   warning  React Hook useEffect has a missing dependency: 'fetchZones'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  104:11  error    'statusColor' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                    no-unused-vars
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\components\admin\ManageCrowd.jsx
+  4:8  error  'stadiumMap' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\components\admin\Sidebar.jsx
+  13:63  error  'LayoutGrid' is not defined  no-undef
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\components\admin\StadiumHeatmap.jsx
+  24:10  error  'getRiskLabel' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\components\admin\SystemSettings.jsx
+  114:45  error  'Icon' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-unused-vars
+  166:30  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  164 |                                 </div>
+  165 |                             </div>
+> 166 |                             <Toggle value={settings.emergencyMode} onToggle={() => handleToggle('emergencyMode')} danger />
+      |                              ^^^^^^ This component is created during render
+  167 |                         </div>
+  168 |                     </div>
+  169 |                 </div>
+
+  38 |     };
+  39 |
+> 40 |     const Toggle = ({ value, onToggle, danger }) => (
+     |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 41 |         <button
+     | ^^^^^^^^^^^^^^^
+> 42 |             onClick={onToggle}
+     | ^^^^^^^^^^^^^^^
+> 43 |             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${value ? (danger ? 'bg-critical' : 'bg-primary') : 'bg-slate-200'}`}
+     | ^^^^^^^^^^^^^^^
+> 44 |         >
+     | ^^^^^^^^^^^^^^^
+> 45 |             <span className={`${value ? 'translate-x-5' : 'translate-x-1'} inline-block h-3 w-3 transform rounded-full bg-white transition-transform shadow-sm`} />
+     | ^^^^^^^^^^^^^^^
+> 46 |         </button>
+     | ^^^^^^^^^^^^^^^
+> 47 |     );
+     | ^^^^^^ The component is created during render here
+  48 |
+  49 |     return (
+  50 |         <div className="space-y-6">  react-hooks/static-components
+  186:45  error  'Icon' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-unused-vars
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\components\admin\VenueConfigPanel.jsx
+  36:18  error  'err' is defined but never used  no-unused-vars
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\components\admin\ZoneAssignment.jsx
+  3:26  error  'getZones' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\components\admin\ZoneConfig.jsx
+  5:19  error  'setZones' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\context\AuthContext.jsx
+   5:14  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react-refresh/only-export-components
+  15:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  13 |         const storedUser = localStorage.getItem('user');
+  14 |         if (storedUser) {
+> 15 |             setUser(JSON.parse(storedUser));
+     |             ^^^^^^^ Avoid calling setState() directly within an effect
+  16 |         }
+  17 |         setLoading(false);
+  18 |     }, []);  react-hooks/set-state-in-effect
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\public-dashboard\PublicDashboard.jsx
+  72:20  error  'setAlerts' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             no-unused-vars
+  83:24  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  81 |     useEffect(() => {
+  82 |         const hour = new Date().getHours();
+> 83 |         if (hour < 12) setGreeting("Good Morning");
+     |                        ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  84 |         else if (hour < 18) setGreeting("Good Afternoon");
+  85 |         else setGreeting("Good Evening");
+  86 |  react-hooks/set-state-in-effect
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\public-dashboard\context\DashboardContext.jsx
+   5:14  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+  68:20  error  'setAlerts' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                       no-unused-vars
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\public-dashboard\pages\LiveMapPage.jsx
+  5:41  error  'getRiskColorInfo' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\autis\OneDrive\Desktop\Aarohan-26-CSI-RAIT-Team-Shivshakti-main\frontend\src\public-dashboard\pages\OverviewPage.jsx
+   36:28   error  'user' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             no-unused-vars
+   36:55   error  'getZoneById' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      no-unused-vars
+   45:12   error  'map' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              no-unused-vars
+  188:80   error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  186 |                                         <Marker
+  187 |                                             key={zone.id}
+> 188 |                                             position={{ lat: currentPos.lat + (Math.random() - 0.5) * 0.002, lng: currentPos.lng + (Math.random() - 0.5) * 0.002 }}
+      |                                                                                ^^^^^^^^^^^^^ Cannot call impure function
+  189 |                                             onClick={() => setSelectedZone(zone)}
+  190 |                                             icon={{
+  191 |                                                 url: `https://maps.google.com/mapfiles/ms/icons/${zone.riskLevel === 'Critical' ? 'red' : zone.riskLevel === 'High' ? 'orange' : 'green'}-dot.png`,                                                       react-hooks/purity
+  188:133  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  186 |                                         <Marker
+  187 |                                             key={zone.id}
+> 188 |                                             position={{ lat: currentPos.lat + (Math.random() - 0.5) * 0.002, lng: currentPos.lng + (Math.random() - 0.5) * 0.002 }}
+      |                                                                                                                                     ^^^^^^^^^^^^^ Cannot call impure function
+  189 |                                             onClick={() => setSelectedZone(zone)}
+  190 |                                             icon={{
+  191 |                                                 url: `https://maps.google.com/mapfiles/ms/icons/${zone.riskLevel === 'Critical' ? 'red' : zone.riskLevel === 'High' ? 'orange' : 'green'}-dot.png`,  react-hooks/purity
+
+Γ£û 40 problems (38 errors, 2 warnings)
+

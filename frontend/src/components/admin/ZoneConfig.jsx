@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Edit2, LayoutDashboard, MapPin, Users, AlertTriangle } from 'lucide-react';
 
 export default function ZoneConfig({ setActiveTab }) {
-    const [zones, setZones] = useState(() => {
+    const [zones] = useState(() => {
         const savedHistory = JSON.parse(localStorage.getItem('crowdHistory') || '[]');
 
         const defaultZones = [

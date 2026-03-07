@@ -1,28 +1,83 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Users, Shield, AlertTriangle, Activity, Database, Bell, MapPin, Clock, ArrowUp, ArrowDown, Zap, AlertCircle } from 'lucide-react';
-import { getMyVenue, getAssignments } from '../../services/api';
+import { getMyVenue, getAssignments, getZones, getIncidents, getAlerts } from '../../services/api';
 
 export default function CommandCenter() {
     const [venue, setVenue] = useState(null);
     const [zones, setZones] = useState([]);
     const [assignments, setAssignments] = useState([]);
+    const [incidents, setIncidents] = useState([]);
+    const [_alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Audio & Toast State
+    const [activeToast, setActiveToast] = useState(null);
+    const alertingZonesRef = useRef(new Set());
+    const audioRef = useRef(null);
+
+    useEffect(() => {
+        audioRef.current = new Audio('/sounds/buzzer.mp3');
+    }, []);
+
     const fetchData = async () => {
         try {
-            const [venueRes, assignmentsRes] = await Promise.all([
+            const [venueRes, assignmentsRes, zonesRes] = await Promise.all([
                 getMyVenue(),
-                getAssignments()
+                getAssignments(),
+                getZones()
             ]);
 
             if (venueRes.success) {
                 setVenue(venueRes.venue);
-                setZones(venueRes.zones || []);
+
+                // Use the live zones array instead of the static venue setup array
+                const incomingZones = Array.isArray(zonesRes) ? zonesRes.filter(z => z.venueId === venueRes.venue._id) : (venueRes.zones || []);
+                setZones(incomingZones);
+
+                // --- Audio Alert Logic ---
+                let playedSound = false;
+                let newToastMsg = null;
+                const currentAlerts = new Set(alertingZonesRef.current);
+
+                incomingZones.forEach(z => {
+                    const density = z.capacity > 0 ? (z.currentOccupancy / z.capacity) : 0;
+                    if (density > 1.0) {
+                        if (!currentAlerts.has(z._id)) {
+                            playedSound = true;
+                            newToastMsg = `🚨 CRITICAL OVERCROWDING IN ${z.zoneName.toUpperCase()}`;
+                            currentAlerts.add(z._id);
+                        }
+                    } else {
+                        currentAlerts.delete(z._id);
+                    }
+                });
+
+                alertingZonesRef.current = currentAlerts;
+
+                if (playedSound) {
+                    if (audioRef.current) {
+                        audioRef.current.currentTime = 0;
+                        audioRef.current.play().catch(e => console.log('Autoplay blocked', e));
+                    }
+                    if (newToastMsg) {
+                        setActiveToast(newToastMsg);
+                        setTimeout(() => setActiveToast(null), 8000); // hide after 8s
+                    }
+                }
             }
             if (assignmentsRes.success) {
                 setAssignments(assignmentsRes.data || []);
             }
+
+            // Fetch Real-time Alerts & Incidents
+            const [alertsRes, incidentsRes] = await Promise.all([
+                getAlerts(),
+                getIncidents()
+            ]);
+
+            if (alertsRes.success) setAlerts(alertsRes.data || []);
+            if (incidentsRes.success) setIncidents(incidentsRes.data || []);
         } catch (err) {
             console.error("Command Center Fetch Error:", err);
             setError("Failed to synchronize with Command Engine.");
@@ -102,6 +157,20 @@ export default function CommandCenter() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-700">
+            {/* Notification Toast */}
+            {activeToast && (
+                <div className="fixed top-6 right-6 z-[100] animate-in slide-in-from-right-8 fade-in duration-500 bg-red-600 border-2 border-red-400 text-white px-6 py-4 rounded-2xl shadow-[0_0_40px_rgba(220,38,38,0.5)] flex items-center gap-4">
+                    <div className="relative">
+                        <AlertTriangle className="animate-bounce" size={28} />
+                        <span className="absolute inset-0 rounded-full animate-ping border-2 border-white/50"></span>
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-200">System Alert</p>
+                        <p className="text-lg font-black tracking-tight italic">{activeToast}</p>
+                    </div>
+                </div>
+            )}
+
             {/* Top Stat Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Total Visitors Card - DYNAMIC STATE */}
@@ -158,25 +227,27 @@ export default function CommandCenter() {
                             <AlertTriangle size={20} />
                         </div>
                     </div>
-                    <p className="text-4xl font-black text-slate-800 tracking-tight italic">0</p>
-                    <p className="text-[10px] font-black text-emerald-500 mt-2 uppercase tracking-widest italic">All Cleared</p>
+                    <p className="text-4xl font-black text-slate-800 tracking-tight italic">{incidents.length}</p>
+                    <p className={`text-[10px] font-black ${incidents.filter(i => i.status !== 'Resolved').length > 0 ? 'text-critical' : 'text-emerald-500'} mt-2 uppercase tracking-widest italic`}>
+                        {incidents.filter(i => i.status !== 'Resolved').length > 0 ? `${incidents.filter(i => i.status !== 'Resolved').length} Active Incidents` : 'All Cleared'}
+                    </p>
                     <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tight italic">
-                        Alpha-One Ready
+                        {venue?.name} Node
                     </p>
                 </div>
 
-                <div className="card-base group hover:border-secondary transition-all bg-white">
+                <div className={`card-base group transition-all bg-white border ${crowdState.border} ${crowdState.hover}`}>
                     <div className="flex justify-between items-start mb-4">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Command Mode</p>
-                        <div className="p-2 bg-slate-50 rounded-lg text-slate-400 group-hover:text-secondary group-hover:bg-secondary/10 transition-colors">
-                            <Activity size={20} />
+                        <div className={`p-2 rounded-lg ${crowdState.iconBg} transition-colors`}>
+                            <Activity size={20} className={crowdState.iconColor} />
                         </div>
                     </div>
-                    <p className={`text-3xl font-black ${venue?.simulationMode === 'EMERGENCY' ? 'text-red-500' : (venue?.simulationMode === 'SURGE' ? 'text-orange-500' : 'text-primary')} tracking-tight italic uppercase`}>
-                        {venue?.simulationMode || 'NORMAL'}
+                    <p className={`text-3xl font-black ${crowdState.color} tracking-tight italic uppercase`}>
+                        {crowdState.label}
                     </p>
                     <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-widest italic">
-                        Tactical Awareness High
+                        {crowdState.label === 'EMERGENCY' ? 'Critical — Immediate Action' : crowdState.label === 'SURGE' ? 'Elevated — Monitor Closely' : 'Tactical Awareness High'}
                     </p>
                     <p className="text-[9px] font-black text-primary mt-1 uppercase tracking-tight italic shadow-sm inline-block">
                         AI Core Online

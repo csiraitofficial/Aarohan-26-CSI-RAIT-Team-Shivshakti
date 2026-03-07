@@ -92,9 +92,8 @@ const CrowdFlowDashboard = () => {
     }, []);
 
     // Live Analytics Computations
-    // Live Analytics Computations
-    const entryRate = isSimulating ? Math.floor(Math.random() * 50) + 10 : 0;
-    const exitRate = isSimulating ? Math.floor(Math.random() * 30) + 5 : 0;
+    const entryRate = zones.reduce((sum, z) => sum + (z.entryCount || 0), 0);
+    const exitRate = zones.reduce((sum, z) => sum + (z.exitCount || 0), 0);
     const netFlow = entryRate - exitRate;
     const activeAlerts = alerts.filter(a => a.status !== 'RESOLVED').length;
     const highRiskZones = zones.filter(z => (z.capacity ? (z.currentOccupancy / z.capacity) : 0) >= 0.75).length;
@@ -248,6 +247,8 @@ const CrowdFlowDashboard = () => {
                                         <p className="text-secondary font-bold">[{new Date().toLocaleTimeString()}] INF: Syncing with Cluster Authority {localStorage.getItem('userNode') || 'NODE-01'}</p>
                                         <p className="text-emerald-400/80">&gt; GLOBAL TICK: MODE={mode} | POLLING=5.0s</p>
                                         <p className="text-white/60">&gt; RESPONSE RECEIVED FROM AI CORE: OK (200)</p>
+                                        <p className="text-white/60">&gt; SECTOR RE-BALANCING: {lastTickData.message}</p>
+                                        <p className="text-white/60">&gt; {zones.length} DATA NODES REFRESHED</p>
                                         {lastTickData.logs && lastTickData.logs.map((log, i) => (
                                             <p key={i} className={`text-white/60 ${log.includes('[ALERT]') ? 'text-critical font-bold' : log.includes('[WARN]') ? 'text-orange-400' : ''}`}>&gt; {log}</p>
                                         ))}
@@ -292,17 +293,15 @@ const CrowdFlowDashboard = () => {
                                 {zones.map(zone => {
                                     const density = zone.capacity ? (zone.currentOccupancy / zone.capacity) : 0;
                                     const isHighRisk = density >= 0.75;
-                                    const randIn = Math.floor(Math.random() * 10);
-                                    const randOut = Math.floor(Math.random() * 10);
                                     return (
-                                        <tr key={zone._id || zone.name} className="hover:bg-slate-50/50 transition-colors group">
-                                            <td className="px-6 py-4 font-bold text-slate-700">{zone.name}</td>
+                                        <tr key={zone._id} className="hover:bg-slate-50/50 transition-colors group">
+                                            <td className="px-6 py-4 font-bold text-slate-700">{zone.zoneName || zone.name}</td>
                                             <td className="px-6 py-4">
                                                 <span className="text-slate-800 font-bold">{zone.currentOccupancy}</span>
                                                 <span className="text-slate-300 ml-1">/ {zone.capacity}</span>
                                             </td>
-                                            <td className="px-6 py-4 text-center font-bold text-emerald-500">+{isSimulating ? randIn : 0}</td>
-                                            <td className="px-6 py-4 text-center font-bold text-slate-400">-{isSimulating ? randOut : 0}</td>
+                                            <td className="px-6 py-4 text-center font-bold text-emerald-500">+{zone.entryCount || 0}</td>
+                                            <td className="px-6 py-4 text-center font-bold text-slate-400">-{zone.exitCount || 0}</td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-3">
                                                     <span className={`text-[10px] font-black tracking-widest uppercase ${isHighRisk ? 'text-critical' : 'text-secondary'}`}>
